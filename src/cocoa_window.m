@@ -1419,6 +1419,12 @@ GLFWbool _glfwRawMouseMotionSupportedCocoa(void)
     return GLFW_FALSE;
 }
 
+void _glfwSetTouchInputCocoa(_GLFWwindow* window, int enabled)
+{
+    _glfwInputError(GLFW_FEATURE_UNIMPLEMENTED,
+                    "Cocoa: Touch input is not yet implemented");
+}
+
 void _glfwPollEventsCocoa(void)
 {
     @autoreleasepool {

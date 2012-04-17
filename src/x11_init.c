@@ -1171,6 +1171,7 @@ GLFWbool _glfwConnectX11(int platformID, _GLFWplatform* platform)
         _glfwSetCursorModeX11,
         _glfwSetRawMouseMotionX11,
         _glfwRawMouseMotionSupportedX11,
+        _glfwSetTouchInputX11,
         _glfwCreateCursorX11,
         _glfwCreateStandardCursorX11,
         _glfwDestroyCursorX11,

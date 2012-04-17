@@ -492,6 +492,7 @@ GLFWbool _glfwConnectCocoa(int platformID, _GLFWplatform* platform)
         _glfwSetCursorModeCocoa,
         _glfwSetRawMouseMotionCocoa,
         _glfwRawMouseMotionSupportedCocoa,
+        _glfwSetTouchInputCocoa,
         _glfwCreateCursorCocoa,
         _glfwCreateStandardCursorCocoa,
         _glfwDestroyCursorCocoa,

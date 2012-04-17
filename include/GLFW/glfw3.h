@@ -1124,6 +1124,7 @@ extern "C" {
 #define GLFW_STICKY_MOUSE_BUTTONS   0x00033003
 #define GLFW_LOCK_KEY_MODS          0x00033004
 #define GLFW_RAW_MOUSE_MOTION       0x00033005
+#define GLFW_TOUCH                  0x00030006
 
 #define GLFW_CURSOR_NORMAL          0x00034001
 #define GLFW_CURSOR_HIDDEN          0x00034002
@@ -1802,6 +1803,27 @@ typedef void (* GLFWcursorenterfun)(GLFWwindow* window, int entered);
  *  @ingroup input
  */
 typedef void (* GLFWscrollfun)(GLFWwindow* window, double xoffset, double yoffset);
+
+/*! @brief The function signature for touch start/end callbacks.
+ *  @param[in] window The window that received the event.
+ *  @param[in] touch The touch that started or ended.
+ *  @param[in] action One of @ref GLFW_PRESS or @ref GLFW_RELEASE.
+ *  @ingroup input
+ *
+ *  @sa glfwSetTouchCallback
+ */
+typedef void (* GLFWtouchfun)(GLFWwindow*,int,int);
+
+/*! @brief The function signature for touch position callbacks.
+ *  @param[in] window The window that received the event.
+ *  @param[in] touch The touch that moved.
+ *  @param[in] xpos The new x-coordinate of the touch.
+ *  @param[in] ypos The new y-coordinate of the touch.
+ *  @ingroup input
+ *
+ *  @sa glfwSetTouchPosCallback
+ */
+typedef void (* GLFWtouchposfun)(GLFWwindow*,int,double,double);
 
 /*! @brief The function pointer type for keyboard key callbacks.
  *
@@ -5280,6 +5302,36 @@ GLFWAPI GLFWcursorenterfun glfwSetCursorEnterCallback(GLFWwindow* window, GLFWcu
  *  @ingroup input
  */
 GLFWAPI GLFWscrollfun glfwSetScrollCallback(GLFWwindow* window, GLFWscrollfun callback);
+
+/*! @brief Sets the touch start/end callback.
+ *
+ *  This function sets the touch callback, which is called when a touch is
+ *  started or ended.
+ *
+ *  @param[in] window The window whose callback to set.
+ *  @param[in] cbfun The new scroll callback, or `NULL` to remove the currently
+ *  set callback.
+ *  @return The previously set callback, or `NULL` if no callback was set or an
+ *  error occurred.
+ *
+ *  @ingroup input
+ */
+GLFWAPI GLFWtouchfun glfwSetTouchCallback(GLFWwindow* window, GLFWtouchfun cbfun);
+
+/*! @brief Sets the touch position callback.
+ *
+ *  This function sets the touch position callback, which is called when a touch
+ *  moves.
+ *
+ *  @param[in] window The window whose callback to set.
+ *  @param[in] cbfun The new scroll callback, or `NULL` to remove the currently
+ *  set callback.
+ *  @return The previously set callback, or `NULL` if no callback was set or an
+ *  error occurred.
+ *
+ *  @ingroup input
+ */
+GLFWAPI GLFWtouchposfun glfwSetTouchPosCallback(GLFWwindow* window, GLFWtouchposfun cbfun);
 
 /*! @brief Sets the path drop callback.
  *

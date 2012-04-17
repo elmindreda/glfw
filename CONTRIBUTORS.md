@@ -106,6 +106,7 @@ video tutorials.
  - Yuri Kunde Schlesner
  - Rokas Kupstys
  - Konstantin Käfer
+ - Quinten Lansu
  - Eric Larson
  - Francis Lecavalier
  - Jong Won Lee

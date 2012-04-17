@@ -251,6 +251,8 @@ void _glfwSetWindowMousePassthroughCocoa(_GLFWwindow* window, GLFWbool enabled);
 void _glfwSetRawMouseMotionCocoa(_GLFWwindow *window, GLFWbool enabled);
 GLFWbool _glfwRawMouseMotionSupportedCocoa(void);
 
+void _glfwSetTouchInputCocoa(_GLFWwindow* window, int enabled);
+
 void _glfwPollEventsCocoa(void);
 void _glfwWaitEventsCocoa(void);
 void _glfwWaitEventsTimeoutCocoa(double timeout);

@@ -48,6 +48,7 @@ GLFWbool _glfwConnectNull(int platformID, _GLFWplatform* platform)
         _glfwSetCursorModeNull,
         _glfwSetRawMouseMotionNull,
         _glfwRawMouseMotionSupportedNull,
+        _glfwSetTouchInputNull,
         _glfwCreateCursorNull,
         _glfwCreateStandardCursorNull,
         _glfwDestroyCursorNull,
