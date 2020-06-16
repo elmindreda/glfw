@@ -49,6 +49,7 @@ _GLFWlibrary _glfw = { GLFW_FALSE };
 //
 static _GLFWerror _glfwMainThreadError;
 static GLFWerrorfun _glfwErrorCallback;
+static GLFWallocator _glfwInitAllocator;
 static _GLFWinitconfig _glfwInitHints =
 {
     GLFW_TRUE,      // hat buttons
@@ -84,11 +85,11 @@ static void terminate(void)
         _glfwFreeMonitor(monitor);
     }
 
-    free(_glfw.monitors);
+    _glfw_free(_glfw.monitors);
     _glfw.monitors = NULL;
     _glfw.monitorCount = 0;
 
-    free(_glfw.mappings);
+    _glfw_free(_glfw.mappings);
     _glfw.mappings = NULL;
     _glfw.mappingCount = 0;
 
@@ -102,7 +103,7 @@ static void terminate(void)
     {
         _GLFWerror* error = _glfw.errorListHead;
         _glfw.errorListHead = error->next;
-        free(error);
+        _glfw_free(error);
     }
 
     _glfwPlatformDestroyTls(&_glfw.contextSlot);
@@ -120,7 +121,7 @@ static void terminate(void)
 char* _glfw_strdup(const char* source)
 {
     const size_t length = strlen(source);
-    char* result = calloc(length + 1, 1);
+    char* result = _glfw_calloc(length + 1, 1);
     strcpy(result, source);
     return result;
 }
@@ -147,6 +148,61 @@ float _glfw_fmaxf(float a, float b)
         return a;
     else
         return b;
+}
+
+void* _glfw_calloc(size_t count, size_t size)
+{
+    if (count && size)
+    {
+        char* block;
+
+        if (count > SIZE_MAX / size)
+        {
+            _glfwInputError(GLFW_INVALID_VALUE, "Allocation size overflow");
+            return NULL;
+        }
+
+        block = _glfw.allocator.allocate(count * size);
+        if (block)
+            return memset(block, 0, count * size);
+        else
+        {
+            _glfwInputError(GLFW_OUT_OF_MEMORY, NULL);
+            return NULL;
+        }
+    }
+    else
+        return NULL;
+}
+
+void* _glfw_realloc(void* pointer, size_t size)
+{
+    if (pointer && size)
+    {
+        char* block = _glfw.allocator.reallocate(pointer, size);
+        if (block)
+            return block;
+        else
+        {
+            _glfwInputError(GLFW_OUT_OF_MEMORY, NULL);
+            return NULL;
+        }
+    }
+    else if (size)
+    {
+        return _glfw_calloc(1, size);
+    }
+    else
+    {
+        _glfw_free(pointer);
+        return NULL;
+    }
+}
+
+void _glfw_free(void* pointer)
+{
+    if (pointer)
+        _glfw.allocator.deallocate(pointer);
 }
 
 
@@ -208,7 +264,7 @@ void _glfwInputError(int code, const char* format, ...)
         error = _glfwPlatformGetTls(&_glfw.errorSlot);
         if (!error)
         {
-            error = calloc(1, sizeof(_GLFWerror));
+            error = _glfw_calloc(1, sizeof(_GLFWerror));
             _glfwPlatformSetTls(&_glfw.errorSlot, error);
             _glfwPlatformLockMutex(&_glfw.errorLock);
             error->next = _glfw.errorListHead;
@@ -238,6 +294,14 @@ GLFWAPI int glfwInit(void)
 
     memset(&_glfw, 0, sizeof(_glfw));
     _glfw.hints.init = _glfwInitHints;
+
+    _glfw.allocator = _glfwInitAllocator;
+    if (!_glfw.allocator.allocate)
+    {
+        _glfw.allocator.allocate   = malloc;
+        _glfw.allocator.reallocate = realloc;
+        _glfw.allocator.deallocate = free;
+    }
 
     if (!_glfwPlatformInit())
     {
@@ -295,6 +359,19 @@ GLFWAPI void glfwInitHint(int hint, int value)
 
     _glfwInputError(GLFW_INVALID_ENUM,
                     "Invalid init hint 0x%08X", hint);
+}
+
+GLFWAPI void glfwInitAllocator(const GLFWallocator* allocator)
+{
+    if (allocator)
+    {
+        if (allocator->allocate && allocator->reallocate && allocator->deallocate)
+            _glfwInitAllocator = *allocator;
+        else
+            _glfwInputError(GLFW_INVALID_VALUE, "Missing function in allocator");
+    }
+    else
+        memset(&_glfwInitAllocator, 0, sizeof(GLFWallocator));
 }
 
 GLFWAPI void glfwGetVersion(int* major, int* minor, int* rev)
