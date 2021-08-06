@@ -400,19 +400,13 @@ static void scroll_callback(GLFWwindow* window, double x, double y)
 static void touch_callback(GLFWwindow* window, int touch, int action)
 {
     printf("%08x at %0.3f: Touch %i %s\n",
-           counter++,
-           glfwGetTime(),
-           touch,
-           get_action_name(action));
+           counter++, glfwGetTime(), touch, get_action_name(action));
 }
 
 static void touch_pos_callback(GLFWwindow* window, int touch, double x, double y)
 {
     printf("%08x at %0.3f: Touch %i position: %0.3f %0.3f\n",
-           counter++,
-           glfwGetTime(),
-           touch,
-           x, y);
+           counter++, glfwGetTime(), touch, x, y);
 }
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)

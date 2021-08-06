@@ -1141,54 +1141,48 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
         case WM_TOUCH:
         {
-            TOUCHINPUT* inputs;
-            UINT count = LOWORD(wParam);
+            TOUCHINPUT* touches;
+            const HTOUCHINPUT input = (HTOUCHINPUT) lParam;
+            const UINT count = LOWORD(wParam);
 
             if (!IsWindows7OrGreater())
                 break;
 
-            inputs = (TOUCHINPUT*) _glfw_calloc(sizeof(TOUCHINPUT), count);
+            touches = _glfw_calloc(count, sizeof(TOUCHINPUT));
 
-            if (GetTouchInputInfo((HTOUCHINPUT) lParam,
-                                  count, inputs, sizeof(TOUCHINPUT)))
+            if (GetTouchInputInfo(input, count, touches, sizeof(TOUCHINPUT)))
             {
                 UINT i;
-                int width, height;
-
-                _glfwGetWindowSizeWin32(window, &width, &height);
+                RECT client;
+                GetClientRect(window->win32.handle, &client);
 
                 for (i = 0;  i < count;  i++)
                 {
                     POINT pos;
 
                     // Discard any points that lie outside of the client area
-
-                    pos.x = TOUCH_COORD_TO_PIXEL(inputs[i].x);
-                    pos.y = TOUCH_COORD_TO_PIXEL(inputs[i].y);
+                    pos.x = TOUCH_COORD_TO_PIXEL(touches[i].x);
+                    pos.y = TOUCH_COORD_TO_PIXEL(touches[i].y);
                     ScreenToClient(window->win32.handle, &pos);
-
-                    if (pos.x < 0 || pos.x >= width ||
-                        pos.y < 0 || pos.y >= height)
-                    {
+                    if (!PtInRect(&client, pos))
                         continue;
-                    }
 
-                    if (inputs[i].dwFlags & TOUCHEVENTF_DOWN)
-                        _glfwInputTouch(window, (int) inputs[i].dwID, GLFW_PRESS);
-                    else if (inputs[i].dwFlags & TOUCHEVENTF_UP)
-                        _glfwInputTouch(window, (int) inputs[i].dwID, GLFW_RELEASE);
-                    else if (inputs[i].dwFlags & TOUCHEVENTF_MOVE)
+                    if (touches[i].dwFlags & TOUCHEVENTF_DOWN)
+                        _glfwInputTouch(window, (int) touches[i].dwID, GLFW_PRESS);
+                    else if (touches[i].dwFlags & TOUCHEVENTF_UP)
+                        _glfwInputTouch(window, (int) touches[i].dwID, GLFW_RELEASE);
+                    else if (touches[i].dwFlags & TOUCHEVENTF_MOVE)
                     {
-                        _glfwInputTouchPos(window, (int) inputs[i].dwID,
-                                           inputs[i].x / 100.0,
-                                           inputs[i].y / 100.0);
+                        _glfwInputTouchPos(window, (int) touches[i].dwID,
+                                           touches[i].x / 100.0,
+                                           touches[i].y / 100.0);
                     }
                 }
 
-                CloseTouchInputHandle((HTOUCHINPUT) lParam);
+                CloseTouchInputHandle(input);
             }
 
-            _glfw_free(inputs);
+            _glfw_free(touches);
             return 0;
         }
 
