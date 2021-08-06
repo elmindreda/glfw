@@ -128,6 +128,8 @@ information on what to include when reporting a bug.
  - Added `glfwGetPlatform` function to query what platform was selected (#1655,#1958)
  - Added `glfwPlatformSupported` function to query if a platform is supported
    (#1655,#1958)
+ - Added `GLFW_TOUCH` input mode and `glfwSetTouchCallback` and `glfwSetTouchPosCallback`
+   functions for touch input (#42,#532,#952,#1736)
  - Added `glfwInitAllocator` for setting a custom memory allocator (#544,#1628,#1947)
  - Added `GLFWallocator` struct and `GLFWallocatefun`, `GLFWreallocatefun` and
    `GLFWdeallocatefun` types (#544,#1628,#1947)

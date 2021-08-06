@@ -17,6 +17,13 @@ selected platform can be queried with @ref glfwGetPlatform.  You can check if
 support for a given platform is compiled in with @ref glfwPlatformSupported.
 
 
+@subsubsection touch_34 Touch input
+
+There will be text here some day.
+
+For more information see @ref touch.
+
+
 @subsubsection standard_cursors_34 More standard cursors
 
 GLFW now provides the standard cursor shapes @ref GLFW_RESIZE_NWSE_CURSOR and
@@ -186,6 +193,8 @@ then GLFW will fail to initialize.
  - @ref glfwGetPlatform
  - @ref glfwPlatformSupported
  - @ref glfwInitVulkanLoader
+ - @ref glfwSetTouchCallback
+ - @ref glfwSetTouchPosCallback
 
 
 @subsubsection types_34 New types in version 3.4
@@ -194,6 +203,8 @@ then GLFW will fail to initialize.
  - @ref GLFWallocatefun
  - @ref GLFWreallocatefun
  - @ref GLFWdeallocatefun
+ - @ref GLFWtouchfun
+ - @ref GLFWtouchposfun
 
 
 @subsubsection constants_34 New constants in version 3.4
@@ -228,6 +239,7 @@ then GLFW will fail to initialize.
  - @ref GLFW_ANGLE_PLATFORM_TYPE_VULKAN
  - @ref GLFW_ANGLE_PLATFORM_TYPE_METAL
  - @ref GLFW_X11_XCB_VULKAN_SURFACE
+ - @ref GLFW_TOUCH
 
 
 @section news_archive Release notes for earlier versions

@@ -535,6 +535,11 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 A normal mouse wheel, being vertical, provides offsets along the Y-axis.
 
 
+@section touch Touch input
+
+Some day there will be text here.
+
+
 @section joystick Joystick input
 
 The joystick functions expose connected joysticks and controllers, with both
