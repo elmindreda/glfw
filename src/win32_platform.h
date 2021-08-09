@@ -292,6 +292,71 @@ typedef struct
 } TOUCHINPUT;
 #endif /*WINVER < 0x0601*/
 
+#if WINVER < 0x0602
+#define WM_POINTERUP 0x0247
+#define WM_POINTERDOWN 0x0246
+#define WM_POINTERUPDATE 0x0245
+#define POINTER_FLAG_DOWN 0x00010000
+#define POINTER_FLAG_UPDATE 0x00020000
+#define POINTER_FLAG_UP 0x00040000
+#define POINTER_FLAG_INCONTACT 0x00000004
+#define GET_POINTERID_WPARAM(wParam) LOWORD(wParam)
+typedef DWORD POINTER_INPUT_TYPE;
+typedef UINT32 POINTER_FLAGS;
+typedef UINT32 TOUCH_FLAGS;
+typedef UINT32 TOUCH_MASK;
+enum
+{
+    PT_POINTER = 0x00000001,
+    PT_TOUCH = 0x00000002,
+    PT_PEN = 0x00000003,
+    PT_MOUSE = 0x00000004
+};
+typedef enum
+{
+    POINTER_CHANGE_NONE,
+    POINTER_CHANGE_FIRSTBUTTON_DOWN,
+    POINTER_CHANGE_FIRSTBUTTON_UP,
+    POINTER_CHANGE_SECONDBUTTON_DOWN,
+    POINTER_CHANGE_SECONDBUTTON_UP,
+    POINTER_CHANGE_THIRDBUTTON_DOWN,
+    POINTER_CHANGE_THIRDBUTTON_UP,
+    POINTER_CHANGE_FOURTHBUTTON_DOWN,
+    POINTER_CHANGE_FOURTHBUTTON_UP,
+    POINTER_CHANGE_FIFTHBUTTON_DOWN,
+    POINTER_CHANGE_FIFTHBUTTON_UP,
+} POINTER_BUTTON_CHANGE_TYPE;
+typedef struct
+{
+    POINTER_INPUT_TYPE pointerType;
+    UINT32 pointerId;
+    UINT32 frameId;
+    POINTER_FLAGS pointerFlags;
+    HANDLE sourceDevice;
+    HWND hwndTarget;
+    POINT ptPixelLocation;
+    POINT ptHimetricLocation;
+    POINT ptPixelLocationRaw;
+    POINT ptHimetricLocationRaw;
+    DWORD dwTime;
+    UINT32 historyCount;
+    INT32 InputData;
+    DWORD dwKeyStates;
+    UINT64 PerformanceCount;
+    POINTER_BUTTON_CHANGE_TYPE ButtonChangeType;
+} POINTER_INFO;
+typedef struct
+{
+    POINTER_INFO pointerInfo;
+    TOUCH_FLAGS touchFlags;
+    TOUCH_MASK touchMask;
+    RECT rcContact;
+    RECT rcContactRaw;
+    UINT32 orientation;
+    UINT32 pressure;
+} POINTER_TOUCH_INFO;
+#endif /*WINVER < 0x0602*/
+
 // winmm.dll function pointer typedefs
 typedef DWORD (WINAPI * PFN_timeGetTime)(void);
 #define timeGetTime _glfw.win32.winmm.GetTime
@@ -318,6 +383,8 @@ typedef BOOL (WINAPI * PFN_GetTouchInputInfo)(HTOUCHINPUT,UINT,TOUCHINPUT*,int);
 typedef BOOL (WINAPI * PFN_CloseTouchInputHandle)(HTOUCHINPUT);
 typedef BOOL (WINAPI * PFN_RegisterTouchWindow)(HWND,LONG);
 typedef BOOL (WINAPI * PFN_UnregisterTouchWindow)(HWND);
+typedef BOOL (WINAPI * PFN_GetPointerType)(UINT32,POINTER_INPUT_TYPE*);
+typedef BOOL (WINAPI * PFN_GetPointerTouchInfo)(UINT32,POINTER_TOUCH_INFO*);
 #define SetProcessDPIAware _glfw.win32.user32.SetProcessDPIAware_
 #define ChangeWindowMessageFilterEx _glfw.win32.user32.ChangeWindowMessageFilterEx_
 #define EnableNonClientDpiScaling _glfw.win32.user32.EnableNonClientDpiScaling_
@@ -329,6 +396,8 @@ typedef BOOL (WINAPI * PFN_UnregisterTouchWindow)(HWND);
 #define CloseTouchInputHandle _glfw.win32.user32.CloseTouchInputHandle_
 #define RegisterTouchWindow   _glfw.win32.user32.RegisterTouchWindow_
 #define UnregisterTouchWindow _glfw.win32.user32.UnregisterTouchWindow_
+#define GetPointerType _glfw.win32.user32.GetPointerType_
+#define GetPointerTouchInfo _glfw.win32.user32.GetPointerTouchInfo_
 
 // dwmapi.dll function pointer typedefs
 typedef HRESULT (WINAPI * PFN_DwmIsCompositionEnabled)(BOOL*);
@@ -517,6 +586,8 @@ typedef struct _GLFWlibraryWin32
         PFN_CloseTouchInputHandle       CloseTouchInputHandle_;
         PFN_RegisterTouchWindow         RegisterTouchWindow_;
         PFN_UnregisterTouchWindow       UnregisterTouchWindow_;
+        PFN_GetPointerType              GetPointerType_;
+        PFN_GetPointerTouchInfo         GetPointerTouchInfo_;
     } user32;
 
     struct {

@@ -111,6 +111,10 @@ static GLFWbool loadLibraries(void)
         _glfwPlatformGetModuleSymbol(_glfw.win32.user32.instance, "RegisterTouchWindow");
     _glfw.win32.user32.UnregisterTouchWindow_ = (PFN_UnregisterTouchWindow)
         _glfwPlatformGetModuleSymbol(_glfw.win32.user32.instance, "UnregisterTouchWindow");
+    _glfw.win32.user32.GetPointerType_ = (PFN_GetPointerType)
+        _glfwPlatformGetModuleSymbol(_glfw.win32.user32.instance, "GetPointerType");
+    _glfw.win32.user32.GetPointerTouchInfo_ = (PFN_GetPointerTouchInfo)
+        _glfwPlatformGetModuleSymbol(_glfw.win32.user32.instance, "GetPointerTouchInfo");
 
     _glfw.win32.dinput8.instance = _glfwPlatformLoadModule("dinput8.dll");
     if (_glfw.win32.dinput8.instance)

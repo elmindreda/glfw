@@ -1139,13 +1139,50 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
             return 0;
         }
 
+        case WM_POINTERDOWN:
+        case WM_POINTERUP:
+        case WM_POINTERUPDATE:
+        {
+            POINTER_TOUCH_INFO touchInfo;
+            POINTER_INPUT_TYPE pointerType;
+            const UINT32 pointerID = GET_POINTERID_WPARAM(wParam);
+
+            if (!window->touchInput)
+                break;
+
+            if (!GetPointerType(pointerID, &pointerType))
+                break;
+
+            if (pointerType == PT_TOUCH && GetPointerTouchInfo(pointerID, &touchInfo))
+            {
+                if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_DOWN)
+                {
+                    if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_INCONTACT)
+                        _glfwInputTouch(window, pointerID, GLFW_PRESS);
+                }
+                else if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_UPDATE)
+                {
+                    if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_INCONTACT)
+                    {
+                        _glfwInputTouchPos(window, pointerID,
+                                           GET_X_LPARAM(lParam),
+                                           GET_Y_LPARAM(lParam));
+                    }
+                }
+                else if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_UP)
+                    _glfwInputTouch(window, pointerID, GLFW_RELEASE);
+            }
+
+            return 0;
+        }
+
         case WM_TOUCH:
         {
             TOUCHINPUT* touches;
             const HTOUCHINPUT input = (HTOUCHINPUT) lParam;
             const UINT count = LOWORD(wParam);
 
-            if (!IsWindows7OrGreater())
+            if (IsWindows8OrGreater())
                 break;
 
             touches = _glfw_calloc(count, sizeof(TOUCHINPUT));
@@ -2109,10 +2146,13 @@ void _glfwSetTouchInputWin32(_GLFWwindow* window, int enabled)
         return;
     }
 
-    if (enabled)
-        RegisterTouchWindow(window->win32.handle, 0);
-    else
-        UnregisterTouchWindow(window->win32.handle);
+    if (!IsWindows8OrGreater())
+    {
+        if (enabled)
+            RegisterTouchWindow(window->win32.handle, 0);
+        else
+            UnregisterTouchWindow(window->win32.handle);
+    }
 }
 
 void _glfwPollEventsWin32(void)
