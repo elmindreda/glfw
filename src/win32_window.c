@@ -1190,20 +1190,9 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
             if (GetTouchInputInfo(input, count, touches, sizeof(TOUCHINPUT)))
             {
                 UINT i;
-                RECT client;
-                GetClientRect(window->win32.handle, &client);
 
                 for (i = 0;  i < count;  i++)
                 {
-                    POINT pos;
-
-                    // Discard any points that lie outside of the client area
-                    pos.x = TOUCH_COORD_TO_PIXEL(touches[i].x);
-                    pos.y = TOUCH_COORD_TO_PIXEL(touches[i].y);
-                    ScreenToClient(window->win32.handle, &pos);
-                    if (!PtInRect(&client, pos))
-                        continue;
-
                     if (touches[i].dwFlags & TOUCHEVENTF_DOWN)
                         _glfwInputTouch(window, (int) touches[i].dwID, GLFW_PRESS);
                     else if (touches[i].dwFlags & TOUCHEVENTF_UP)
