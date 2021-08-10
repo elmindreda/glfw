@@ -205,6 +205,8 @@ static const char* get_action_name(int action)
             return "released";
         case GLFW_REPEAT:
             return "repeated";
+        case GLFW_MOVE:
+            return "moved";
     }
 
     return "caused unknown action";
@@ -397,16 +399,12 @@ static void scroll_callback(GLFWwindow* window, double x, double y)
            counter++, slot->number, glfwGetTime(), x, y);
 }
 
-static void touch_callback(GLFWwindow* window, int touch, int action)
+static void touch_callback(GLFWwindow* window, int touch, int action, double xpos, double ypos)
 {
-    printf("%08x at %0.3f: Touch %i %s\n",
-           counter++, glfwGetTime(), touch, get_action_name(action));
-}
-
-static void touch_pos_callback(GLFWwindow* window, int touch, double x, double y)
-{
-    printf("%08x at %0.3f: Touch %i position: %0.3f %0.3f\n",
-           counter++, glfwGetTime(), touch, x, y);
+    Slot* slot = glfwGetWindowUserPointer(window);
+    printf("%08x to %i at %0.3f: Touch %i %s: %0.3f %0.3f\n",
+           counter++, slot->number, glfwGetTime(),
+           touch, get_action_name(action), xpos, ypos);
 }
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -661,7 +659,6 @@ int main(int argc, char** argv)
         glfwSetCharCallback(slots[i].window, char_callback);
         glfwSetDropCallback(slots[i].window, drop_callback);
         glfwSetTouchCallback(slots[i].window, touch_callback);
-        glfwSetTouchPosCallback(slots[i].window, touch_pos_callback);
 
         glfwMakeContextCurrent(slots[i].window);
         gladLoadGL(glfwGetProcAddress);

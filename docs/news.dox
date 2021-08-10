@@ -194,7 +194,6 @@ then GLFW will fail to initialize.
  - @ref glfwPlatformSupported
  - @ref glfwInitVulkanLoader
  - @ref glfwSetTouchCallback
- - @ref glfwSetTouchPosCallback
 
 
 @subsubsection types_34 New types in version 3.4
@@ -204,7 +203,6 @@ then GLFW will fail to initialize.
  - @ref GLFWreallocatefun
  - @ref GLFWdeallocatefun
  - @ref GLFWtouchfun
- - @ref GLFWtouchposfun
 
 
 @subsubsection constants_34 New constants in version 3.4

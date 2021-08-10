@@ -1155,22 +1155,21 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
             if (pointerType == PT_TOUCH && GetPointerTouchInfo(pointerID, &touchInfo))
             {
+                POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+                ScreenToClient(window->win32.handle, &pos);
+
                 if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_DOWN)
                 {
                     if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_INCONTACT)
-                        _glfwInputTouch(window, pointerID, GLFW_PRESS);
+                        _glfwInputTouch(window, pointerID, GLFW_PRESS, pos.x, pos.y);
                 }
                 else if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_UPDATE)
                 {
                     if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_INCONTACT)
-                    {
-                        _glfwInputTouchPos(window, pointerID,
-                                           GET_X_LPARAM(lParam),
-                                           GET_Y_LPARAM(lParam));
-                    }
+                        _glfwInputTouch(window, pointerID, GLFW_MOVE, pos.x, pos.y);
                 }
                 else if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_UP)
-                    _glfwInputTouch(window, pointerID, GLFW_RELEASE);
+                    _glfwInputTouch(window, pointerID, GLFW_RELEASE, pos.x, pos.y);
             }
 
             return 0;
@@ -1190,19 +1189,22 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
             if (GetTouchInputInfo(input, count, touches, sizeof(TOUCHINPUT)))
             {
                 UINT i;
+                POINT offset = {0};
+
+                ScreenToClient(window->win32.handle, &offset);
 
                 for (i = 0;  i < count;  i++)
                 {
+                    const int touchID = touches[i].dwID;
+                    const double xpos = touches[i].x / 100.0 + offset.x;
+                    const double ypos = touches[i].y / 100.0 + offset.y;
+
                     if (touches[i].dwFlags & TOUCHEVENTF_DOWN)
-                        _glfwInputTouch(window, (int) touches[i].dwID, GLFW_PRESS);
+                        _glfwInputTouch(window, touchID, GLFW_PRESS, xpos, ypos);
                     else if (touches[i].dwFlags & TOUCHEVENTF_UP)
-                        _glfwInputTouch(window, (int) touches[i].dwID, GLFW_RELEASE);
+                        _glfwInputTouch(window, touchID, GLFW_RELEASE, xpos, ypos);
                     else if (touches[i].dwFlags & TOUCHEVENTF_MOVE)
-                    {
-                        _glfwInputTouchPos(window, (int) touches[i].dwID,
-                                           touches[i].x / 100.0,
-                                           touches[i].y / 100.0);
-                    }
+                        _glfwInputTouch(window, touchID, GLFW_MOVE, xpos, ypos);
                 }
 
                 CloseTouchInputHandle(input);
