@@ -238,6 +238,8 @@ then GLFW will fail to initialize.
  - @ref GLFW_ANGLE_PLATFORM_TYPE_METAL
  - @ref GLFW_X11_XCB_VULKAN_SURFACE
  - @ref GLFW_TOUCH
+ - @ref GLFW_SCREEN_TOUCH
+ - @ref GLFW_TRACKPAD_TOUCH
 
 
 @section news_archive Release notes for earlier versions

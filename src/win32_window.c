@@ -1161,15 +1161,15 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
                 if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_DOWN)
                 {
                     if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_INCONTACT)
-                        _glfwInputTouch(window, pointerID, GLFW_PRESS, pos.x, pos.y);
+                        _glfwInputTouch(window, pointerID, GLFW_SCREEN_TOUCH, GLFW_PRESS, pos.x, pos.y);
                 }
                 else if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_UPDATE)
                 {
                     if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_INCONTACT)
-                        _glfwInputTouch(window, pointerID, GLFW_MOVE, pos.x, pos.y);
+                        _glfwInputTouch(window, pointerID, GLFW_SCREEN_TOUCH, GLFW_MOVE, pos.x, pos.y);
                 }
                 else if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_UP)
-                    _glfwInputTouch(window, pointerID, GLFW_RELEASE, pos.x, pos.y);
+                    _glfwInputTouch(window, pointerID, GLFW_SCREEN_TOUCH, GLFW_RELEASE, pos.x, pos.y);
             }
 
             return 0;
@@ -1200,11 +1200,11 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
                     const double ypos = touches[i].y / 100.0 + offset.y;
 
                     if (touches[i].dwFlags & TOUCHEVENTF_DOWN)
-                        _glfwInputTouch(window, touchID, GLFW_PRESS, xpos, ypos);
+                        _glfwInputTouch(window, touchID, GLFW_SCREEN_TOUCH, GLFW_PRESS, xpos, ypos);
                     else if (touches[i].dwFlags & TOUCHEVENTF_UP)
-                        _glfwInputTouch(window, touchID, GLFW_RELEASE, xpos, ypos);
+                        _glfwInputTouch(window, touchID, GLFW_SCREEN_TOUCH, GLFW_RELEASE, xpos, ypos);
                     else if (touches[i].dwFlags & TOUCHEVENTF_MOVE)
-                        _glfwInputTouch(window, touchID, GLFW_MOVE, xpos, ypos);
+                        _glfwInputTouch(window, touchID, GLFW_SCREEN_TOUCH, GLFW_MOVE, xpos, ypos);
                 }
 
                 CloseTouchInputHandle(input);

@@ -321,10 +321,10 @@ void _glfwInputScroll(_GLFWwindow* window, double xoffset, double yoffset)
         window->callbacks.scroll((GLFWwindow*) window, xoffset, yoffset);
 }
 
-void _glfwInputTouch(_GLFWwindow* window, int touch, int action, double xpos, double ypos)
+void _glfwInputTouch(_GLFWwindow* window, int touch, int type, int action, double xpos, double ypos)
 {
     if (window->callbacks.touch)
-        window->callbacks.touch((GLFWwindow*) window, touch, action, xpos, ypos);
+        window->callbacks.touch((GLFWwindow*) window, touch, type, action, xpos, ypos);
 }
 
 // Notifies shared code of a mouse button click event

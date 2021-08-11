@@ -518,7 +518,7 @@ The `GLFW_MOUSE_BUTTON_LAST` constant holds the highest value of any
 @subsection scrolling Scroll input
 
 If you wish to be notified when the user scrolls, whether with a mouse wheel or
-touchpad gesture, set a scroll callback.
+trackpad gesture, set a scroll callback.
 
 @code
 glfwSetScrollCallback(window, scroll_callback);

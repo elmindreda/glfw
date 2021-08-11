@@ -1125,7 +1125,7 @@ extern "C" {
 #define GLFW_STICKY_MOUSE_BUTTONS   0x00033003
 #define GLFW_LOCK_KEY_MODS          0x00033004
 #define GLFW_RAW_MOUSE_MOTION       0x00033005
-#define GLFW_TOUCH                  0x00030006
+#define GLFW_TOUCH                  0x00033006
 
 #define GLFW_CURSOR_NORMAL          0x00034001
 #define GLFW_CURSOR_HIDDEN          0x00034002
@@ -1252,6 +1252,9 @@ extern "C" {
  */
 #define GLFW_HAND_CURSOR            GLFW_POINTING_HAND_CURSOR
 /*! @} */
+
+#define GLFW_SCREEN_TOUCH           0x00038001
+#define GLFW_TRACKPAD_TOUCH         0x00038002
 
 #define GLFW_CONNECTED              0x00040001
 #define GLFW_DISCONNECTED           0x00040002
@@ -1815,6 +1818,7 @@ typedef void (* GLFWscrollfun)(GLFWwindow* window, double xoffset, double yoffse
  *
  *  @param[in] window The window that received the event.
  *  @param[in] touch The touch that started or ended.
+ *  @param[in] type One of @ref GLFW_SCREEN_TOUCH or @ref GLFW_TRACKPAD_TOUCH.
  *  @param[in] action One of @ref GLFW_PRESS, @ref GLFW_MOVE or @ref GLFW_RELEASE.
  *  @param[in] xpos The new x-coordinate of the touch.
  *  @param[in] ypos The new y-coordinate of the touch.
@@ -1826,7 +1830,7 @@ typedef void (* GLFWscrollfun)(GLFWwindow* window, double xoffset, double yoffse
  *
  *  @ingroup input
  */
-typedef void (* GLFWtouchfun)(GLFWwindow*,int,int,double,double);
+typedef void (* GLFWtouchfun)(GLFWwindow*,int,int,int,double,double);
 
 /*! @brief The function pointer type for keyboard key callbacks.
  *
@@ -5279,10 +5283,10 @@ GLFWAPI GLFWcursorenterfun glfwSetCursorEnterCallback(GLFWwindow* window, GLFWcu
  *
  *  This function sets the scroll callback of the specified window, which is
  *  called when a scrolling device is used, such as a mouse wheel or scrolling
- *  area of a touchpad.
+ *  area of a trackpad.
  *
  *  The scroll callback receives all scrolling input, like that from a mouse
- *  wheel or a touchpad scrolling area.
+ *  wheel or a trackpad scrolling area.
  *
  *  @param[in] window The window whose callback to set.
  *  @param[in] callback The new scroll callback, or `NULL` to remove the

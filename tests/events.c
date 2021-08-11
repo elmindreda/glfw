@@ -212,6 +212,19 @@ static const char* get_action_name(int action)
     return "caused unknown action";
 }
 
+static const char* get_touch_type_name(int type)
+{
+    switch (type)
+    {
+        case GLFW_SCREEN_TOUCH:
+            return "screen";
+        case GLFW_TRACKPAD_TOUCH:
+            return "trackpad";
+    }
+
+    return "unknown device";
+}
+
 static const char* get_button_name(int button)
 {
     switch (button)
@@ -399,12 +412,12 @@ static void scroll_callback(GLFWwindow* window, double x, double y)
            counter++, slot->number, glfwGetTime(), x, y);
 }
 
-static void touch_callback(GLFWwindow* window, int touch, int action, double xpos, double ypos)
+static void touch_callback(GLFWwindow* window, int touch, int type, int action, double xpos, double ypos)
 {
     Slot* slot = glfwGetWindowUserPointer(window);
-    printf("%08x to %i at %0.3f: Touch %i %s: %0.3f %0.3f\n",
+    printf("%08x to %i at %0.3f: Touch %i on %s %s: %0.3f %0.3f\n",
            counter++, slot->number, glfwGetTime(),
-           touch, get_action_name(action), xpos, ypos);
+           touch, get_touch_type_name(type), get_action_name(action), xpos, ypos);
 }
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)

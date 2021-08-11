@@ -130,6 +130,7 @@ information on what to include when reporting a bug.
    (#1655,#1958)
  - Added `GLFW_TOUCH` input mode and `glfwSetTouchCallback` function for touch input
    (#42,#532,#952,#1736)
+ - Added `GLFW_SCREEN_TOUCH` and `GLFW_TRACKPAD_TOUCH` touch types (#42)
  - Added `glfwInitAllocator` for setting a custom memory allocator (#544,#1628,#1947)
  - Added `GLFWallocator` struct and `GLFWallocatefun`, `GLFWreallocatefun` and
    `GLFWdeallocatefun` types (#544,#1628,#1947)
