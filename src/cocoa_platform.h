@@ -142,6 +142,8 @@ typedef struct _GLFWwindowNS
     id              delegate;
     id              view;
     id              layer;
+    id              touches;
+    unsigned int    touchCount;
 
     GLFWbool        maximized;
     GLFWbool        occluded;

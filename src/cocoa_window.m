@@ -414,6 +414,9 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)mouseDown:(NSEvent *)event
 {
+    if (window->touchInput && [event subtype] == NSTouchEventSubtype)
+        return;
+
     _glfwInputMouseClick(window,
                          GLFW_MOUSE_BUTTON_LEFT,
                          GLFW_PRESS,
@@ -427,6 +430,9 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)mouseUp:(NSEvent *)event
 {
+    if (window->touchInput && [event subtype] == NSTouchEventSubtype)
+        return;
+
     _glfwInputMouseClick(window,
                          GLFW_MOUSE_BUTTON_LEFT,
                          GLFW_RELEASE,
@@ -435,6 +441,9 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)mouseMoved:(NSEvent *)event
 {
+    if (window->touchInput && [event subtype] == NSTouchEventSubtype)
+        return;
+
     if (window->cursorMode == GLFW_CURSOR_DISABLED)
     {
         const double dx = [event deltaX] - window->ns.cursorWarpDeltaX;
@@ -459,6 +468,9 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)rightMouseDown:(NSEvent *)event
 {
+    if (window->touchInput && [event subtype] == NSTouchEventSubtype)
+        return;
+
     _glfwInputMouseClick(window,
                          GLFW_MOUSE_BUTTON_RIGHT,
                          GLFW_PRESS,
@@ -472,6 +484,9 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)rightMouseUp:(NSEvent *)event
 {
+    if (window->touchInput && [event subtype] == NSTouchEventSubtype)
+        return;
+
     _glfwInputMouseClick(window,
                          GLFW_MOUSE_BUTTON_RIGHT,
                          GLFW_RELEASE,
@@ -480,6 +495,9 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)otherMouseDown:(NSEvent *)event
 {
+    if (window->touchInput && [event subtype] == NSTouchEventSubtype)
+        return;
+
     _glfwInputMouseClick(window,
                          (int) [event buttonNumber],
                          GLFW_PRESS,
@@ -493,6 +511,9 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)otherMouseUp:(NSEvent *)event
 {
+    if (window->touchInput && [event subtype] == NSTouchEventSubtype)
+        return;
+
     _glfwInputMouseClick(window,
                          (int) [event buttonNumber],
                          GLFW_RELEASE,
@@ -622,6 +643,151 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
     if (fabs(deltaX) > 0.0 || fabs(deltaY) > 0.0)
         _glfwInputScroll(window, deltaX, deltaY);
+}
+
+- (void)touchesBeganWithEvent:(NSEvent *)event
+{
+    NSSet* touches = [event touchesMatchingPhase:NSTouchPhaseBegan inView:self];
+    for (NSTouch* touch in touches)
+    {
+        int type = GLFW_TRACKPAD_TOUCH;
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
+        if ([touch respondsToSelector:@selector(type)])
+        {
+            if ([touch type] == NSTouchTypeDirect)
+                type = GLFW_SCREEN_TOUCH;
+        }
+#endif
+
+        NSUInteger index = [window->ns.touches indexOfObject:[touch identity]];
+        if (index == NSNotFound)
+        {
+            index = [window->ns.touches count];
+            [window->ns.touches addObject:[[touch identity] retain]];
+        }
+
+        window->ns.touchCount++;
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
+        if (type == GLFW_SCREEN_TOUCH)
+        {
+            const NSPoint pos = [touch locationInView:self];
+            const NSRect contentRect = [window->ns.view frame];
+            _glfwInputTouch(window, index, type, GLFW_PRESS,
+                            pos.x, contentRect.size.height - pos.y);
+        }
+        else
+#endif
+        {
+            const NSPoint pos = [touch normalizedPosition];
+            _glfwInputTouch(window, index, type, GLFW_PRESS, pos.x, pos.y);
+        }
+    }
+}
+
+- (void)touchesMovedWithEvent:(NSEvent *)event
+{
+    NSSet* touches = [event touchesMatchingPhase:NSTouchPhaseMoved inView:self];
+    for (NSTouch* touch in touches)
+    {
+        int type = GLFW_TRACKPAD_TOUCH;
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
+        if ([touch respondsToSelector:@selector(type)])
+        {
+            if ([touch type] == NSTouchTypeDirect)
+                type = GLFW_SCREEN_TOUCH;
+        }
+#endif
+
+        NSUInteger index = [window->ns.touches indexOfObject:[touch identity]];
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
+        if (type == GLFW_SCREEN_TOUCH)
+        {
+            const NSPoint pos = [touch locationInView:self];
+            const NSRect contentRect = [window->ns.view frame];
+            _glfwInputTouch(window, index, type, GLFW_MOVE,
+                            pos.x, contentRect.size.height - pos.y);
+        }
+        else
+#endif
+        {
+            const NSPoint pos = [touch normalizedPosition];
+            _glfwInputTouch(window, index, type, GLFW_MOVE, pos.x, pos.y);
+        }
+    }
+}
+
+- (void)touchesEndedWithEvent:(NSEvent *)event
+{
+    NSSet* touches = [event touchesMatchingPhase:NSTouchPhaseEnded inView:self];
+    for (NSTouch* touch in touches)
+    {
+        int type = GLFW_TRACKPAD_TOUCH;
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
+        if ([touch respondsToSelector:@selector(type)])
+        {
+            if ([touch type] == NSTouchTypeDirect)
+                type = GLFW_SCREEN_TOUCH;
+        }
+#endif
+
+        NSUInteger index = [window->ns.touches indexOfObject:[touch identity]];
+        window->ns.touchCount--;
+        if (window->ns.touchCount == 0)
+            [window->ns.touches removeAllObjects];
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
+        if (type == GLFW_SCREEN_TOUCH)
+        {
+            const NSPoint pos = [touch locationInView:self];
+            const NSRect contentRect = [window->ns.view frame];
+            _glfwInputTouch(window, index, type, GLFW_RELEASE,
+                            pos.x, contentRect.size.height - pos.y);
+        }
+        else
+#endif
+        {
+            const NSPoint pos = [touch normalizedPosition];
+            _glfwInputTouch(window, index, type, GLFW_RELEASE, pos.x, pos.y);
+        }
+    }
+}
+
+- (void)touchesCancelledWithEvent:(NSEvent *)event
+{
+    NSSet* touches = [event touchesMatchingPhase:NSTouchPhaseCancelled inView:self];
+    for (NSTouch* touch in touches)
+    {
+        int type = GLFW_TRACKPAD_TOUCH;
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
+        if ([touch respondsToSelector:@selector(type)])
+        {
+            if ([touch type] == NSTouchTypeDirect)
+                type = GLFW_SCREEN_TOUCH;
+        }
+#endif
+
+        NSUInteger index = [window->ns.touches indexOfObject:[touch identity]];
+        window->ns.touchCount--;
+        if (window->ns.touchCount == 0)
+            [window->ns.touches removeAllObjects];
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
+        if (type == GLFW_SCREEN_TOUCH)
+        {
+            const NSPoint pos = [touch locationInView:self];
+            const NSRect contentRect = [window->ns.view frame];
+            _glfwInputTouch(window, index, type, GLFW_CANCEL,
+                            pos.x, contentRect.size.height - pos.y);
+        }
+        else
+#endif
+        {
+            const NSPoint pos = [touch normalizedPosition];
+            _glfwInputTouch(window, index, type, GLFW_CANCEL, pos.x, pos.y);
+        }
+    }
 }
 
 - (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender
@@ -850,6 +1016,7 @@ static GLFWbool createNativeWindow(_GLFWwindow* window,
 
     window->ns.view = [[GLFWContentView alloc] initWithGlfwWindow:window];
     window->ns.retina = wndconfig->ns.retina;
+    window->ns.touches = [[NSMutableArray alloc] init];
 
     if (fbconfig->transparent)
     {
@@ -984,6 +1151,9 @@ void _glfwDestroyWindowCocoa(_GLFWwindow* window)
 
     [window->ns.view release];
     window->ns.view = nil;
+
+    [window->ns.touches release];
+    window->ns.touches = nil;
 
     [window->ns.object close];
     window->ns.object = nil;
@@ -1421,8 +1591,18 @@ GLFWbool _glfwRawMouseMotionSupportedCocoa(void)
 
 void _glfwSetTouchInputCocoa(_GLFWwindow* window, int enabled)
 {
-    _glfwInputError(GLFW_FEATURE_UNIMPLEMENTED,
-                    "Cocoa: Touch input is not yet implemented");
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
+    if ([window->ns.view respondsToSelector:@selector(setAllowedTouchTypes)])
+    {
+        const NSUInteger types = NSTouchTypeMaskDirect | NSTouchTypeMaskIndirect;
+        if (enabled)
+            [window->ns.view setAllowedTouchTypes:types];
+        else
+            [window->ns.view setAllowedTouchTypes:0];
+    }
+#endif
+
+    [window->ns.view setAcceptsTouchEvents:enabled];
 }
 
 void _glfwPollEventsCocoa(void)
