@@ -344,6 +344,7 @@ extern "C" {
  */
 #define GLFW_REPEAT                 2
 #define GLFW_MOVE                   3
+#define GLFW_CANCEL                 4
 /*! @} */
 
 /*! @defgroup hat_state Joystick hat states
@@ -1819,7 +1820,8 @@ typedef void (* GLFWscrollfun)(GLFWwindow* window, double xoffset, double yoffse
  *  @param[in] window The window that received the event.
  *  @param[in] touch The touch that started or ended.
  *  @param[in] type One of @ref GLFW_SCREEN_TOUCH or @ref GLFW_TRACKPAD_TOUCH.
- *  @param[in] action One of @ref GLFW_PRESS, @ref GLFW_MOVE or @ref GLFW_RELEASE.
+ *  @param[in] action One of @ref GLFW_PRESS, @ref GLFW_MOVE, @ref GLFW_RELEASE
+ *  or @ref GLFW_CANCEL.
  *  @param[in] xpos The new x-coordinate of the touch.
  *  @param[in] ypos The new y-coordinate of the touch.
  *

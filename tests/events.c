@@ -207,6 +207,8 @@ static const char* get_action_name(int action)
             return "repeated";
         case GLFW_MOVE:
             return "moved";
+        case GLFW_CANCEL:
+            return "cancelled";
     }
 
     return "caused unknown action";
