@@ -1089,47 +1089,59 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
         case WM_GETMINMAXINFO:
         {
-            int xoff, yoff;
-            UINT dpi = USER_DEFAULT_SCREEN_DPI;
+            RECT frame = {0};
+            DWORD style, exStyle;
+            int captionHeight;
+            MONITORINFO mi = { sizeof(mi) };
             MINMAXINFO* mmi = (MINMAXINFO*) lParam;
 
             if (window->monitor)
                 break;
 
-            if (_glfwIsWindows10Version1607OrGreaterWin32())
-                dpi = GetDpiForWindow(window->win32.handle);
+            GetMonitorInfoW(MonitorFromWindow(window->win32.handle,
+                                              MONITOR_DEFAULTTONEAREST), &mi);
 
-            getFullWindowSize(getWindowStyle(window), getWindowExStyle(window),
-                              0, 0, &xoff, &yoff, dpi);
+            style = GetWindowLongW(window->win32.handle, GWL_STYLE);
+            exStyle = GetWindowLongW(window->win32.handle, GWL_EXSTYLE);
+
+            if (_glfwIsWindows10Version1607OrGreaterWin32())
+            {
+                const UINT dpi = GetDpiForWindow(window->win32.handle);
+                AdjustWindowRectExForDpi(&frame, style, FALSE, exStyle, dpi);
+                captionHeight = GetSystemMetricsForDpi(SM_CYCAPTION, dpi);
+            }
+            else
+            {
+                AdjustWindowRectEx(&frame, style, FALSE, exStyle);
+                captionHeight = GetSystemMetrics(SM_CYCAPTION);
+            }
+
+            mmi->ptMaxSize.x = mi.rcWork.right - mi.rcWork.left + frame.right - frame.left;
+            mmi->ptMaxSize.y = mi.rcWork.bottom - mi.rcWork.top + frame.bottom - frame.top;
+
+            mmi->ptMaxPosition.x = mi.rcWork.left - mi.rcMonitor.left + frame.left;
+            mmi->ptMaxPosition.y = mi.rcWork.top - mi.rcMonitor.top + frame.top;
+
+            if (window->decorated)
+                mmi->ptMaxPosition.y += captionHeight;
 
             if (window->minwidth != GLFW_DONT_CARE &&
                 window->minheight != GLFW_DONT_CARE)
             {
-                mmi->ptMinTrackSize.x = window->minwidth + xoff;
-                mmi->ptMinTrackSize.y = window->minheight + yoff;
+                mmi->ptMinTrackSize.x = window->minwidth + frame.right - frame.left;
+                mmi->ptMinTrackSize.y = window->minheight + frame.bottom - frame.top;
             }
 
             if (window->maxwidth != GLFW_DONT_CARE &&
                 window->maxheight != GLFW_DONT_CARE)
             {
-                mmi->ptMaxTrackSize.x = window->maxwidth + xoff;
-                mmi->ptMaxTrackSize.y = window->maxheight + yoff;
-            }
+                mmi->ptMaxTrackSize.x = window->maxwidth + frame.right - frame.left;
+                mmi->ptMaxTrackSize.y = window->maxheight + frame.bottom - frame.top;
 
-            if (!window->decorated)
-            {
-                MONITORINFO mi;
-                const HMONITOR mh = MonitorFromWindow(window->win32.handle,
-                                                      MONITOR_DEFAULTTONEAREST);
-
-                ZeroMemory(&mi, sizeof(mi));
-                mi.cbSize = sizeof(mi);
-                GetMonitorInfoW(mh, &mi);
-
-                mmi->ptMaxPosition.x = mi.rcWork.left - mi.rcMonitor.left;
-                mmi->ptMaxPosition.y = mi.rcWork.top - mi.rcMonitor.top;
-                mmi->ptMaxSize.x = mi.rcWork.right - mi.rcWork.left;
-                mmi->ptMaxSize.y = mi.rcWork.bottom - mi.rcWork.top;
+                if (mmi->ptMaxSize.x > mmi->ptMaxTrackSize.x)
+                    mmi->ptMaxSize.x = mmi->ptMaxTrackSize.x;
+                if (mmi->ptMaxSize.y > mmi->ptMaxTrackSize.y)
+                    mmi->ptMaxSize.y = mmi->ptMaxTrackSize.y;
             }
 
             return 0;
