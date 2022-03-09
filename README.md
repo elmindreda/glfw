@@ -213,6 +213,7 @@ information on what to include when reporting a bug.
    window
  - [Win32] Bugfix: `glfwMaximizeWindow` would make a hidden window visible
  - [Win32] Bugfix: A window with a maximum size set would maximize incorrectly
+ - [Win32] Bugfix: Some maximized windows would not adapt to work area changes
  - [Cocoa] Added support for `VK_EXT_metal_surface` (#1619)
  - [Cocoa] Added locating the Vulkan loader at runtime in an application bundle
  - [Cocoa] Moved main menu creation to GLFW initialization time (#1649)

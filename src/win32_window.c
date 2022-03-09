@@ -1229,6 +1229,30 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
             break;
         }
 
+        case WM_SETTINGCHANGE:
+        {
+            if (wParam == SPI_SETWORKAREA)
+            {
+                if (!IsZoomed(window->win32.handle))
+                    break;
+
+                if (window->monitor)
+                    break;
+
+                if (window->decorated &&
+                    (window->maxwidth == GLFW_DONT_CARE ||
+                     window->maxheight == GLFW_DONT_CARE))
+                {
+                    break;
+                }
+
+                // We have a non-standard maximized rect and need to update it manually
+                maximizeWindowManually(window);
+            }
+
+            break;
+        }
+
         case WM_SETCURSOR:
         {
             if (LOWORD(lParam) == HTCLIENT)
