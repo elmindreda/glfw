@@ -97,7 +97,7 @@ static GLFWbool chooseEGLConfig(const _GLFWctxconfig* ctxconfig,
     uint32_t closestConfigDiff = UINT32_MAX;
     GLFWbool wrongApiAvailable = GLFW_FALSE;
 
-    if (ctxconfig->client == GLFW_OPENGL_ES_API)
+    if (ctxconfig->clientAPI == GLFW_OPENGL_ES_API)
     {
         if (ctxconfig->major == 1)
             apiBit = EGL_OPENGL_ES_BIT;
@@ -206,7 +206,7 @@ static GLFWbool chooseEGLConfig(const _GLFWctxconfig* ctxconfig,
     {
         if (wrongApiAvailable)
         {
-            if (ctxconfig->client == GLFW_OPENGL_ES_API)
+            if (ctxconfig->clientAPI == GLFW_OPENGL_ES_API)
             {
                 if (ctxconfig->major == 1)
                 {
@@ -326,7 +326,7 @@ static void destroyContextEGL(_GLFWwindow* window)
     // NOTE: Do not unload libGL.so.1 while the X11 display is still open,
     //       as it will make XCloseDisplay segfault
     if (_glfw.platform.platformID != GLFW_PLATFORM_X11 ||
-        window->context.client != GLFW_OPENGL_API)
+        window->context.clientAPI != GLFW_OPENGL_API)
     {
         if (window->context.egl.client)
         {
@@ -583,7 +583,7 @@ GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
     if (!chooseEGLConfig(ctxconfig, fbconfig, &config))
         return GLFW_FALSE;
 
-    if (ctxconfig->client == GLFW_OPENGL_ES_API)
+    if (ctxconfig->clientAPI == GLFW_OPENGL_ES_API)
     {
         if (!eglBindAPI(EGL_OPENGL_ES_API))
         {
@@ -608,7 +608,7 @@ GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
     {
         int mask = 0, flags = 0;
 
-        if (ctxconfig->client == GLFW_OPENGL_API)
+        if (ctxconfig->clientAPI == GLFW_OPENGL_API)
         {
             if (ctxconfig->forward)
                 flags |= EGL_CONTEXT_OPENGL_FORWARD_COMPATIBLE_BIT_KHR;
@@ -658,7 +658,7 @@ GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
     }
     else
     {
-        if (ctxconfig->client == GLFW_OPENGL_ES_API)
+        if (ctxconfig->clientAPI == GLFW_OPENGL_ES_API)
             SET_ATTRIB(EGL_CONTEXT_CLIENT_VERSION, ctxconfig->major);
     }
 
@@ -785,7 +785,7 @@ GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
             NULL
         };
 
-        if (ctxconfig->client == GLFW_OPENGL_ES_API)
+        if (ctxconfig->clientAPI == GLFW_OPENGL_ES_API)
         {
             if (ctxconfig->major == 1)
                 sonames = es1sonames;
@@ -882,7 +882,7 @@ GLFWAPI EGLContext glfwGetEGLContext(GLFWwindow* handle)
     _GLFWwindow* window = (_GLFWwindow*) handle;
     _GLFW_REQUIRE_INIT_OR_RETURN(EGL_NO_CONTEXT);
 
-    if (window->context.source != GLFW_EGL_CONTEXT_API)
+    if (window->context.creationAPI != GLFW_EGL_CONTEXT_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
         return EGL_NO_CONTEXT;
@@ -896,7 +896,7 @@ GLFWAPI EGLSurface glfwGetEGLSurface(GLFWwindow* handle)
     _GLFWwindow* window = (_GLFWwindow*) handle;
     _GLFW_REQUIRE_INIT_OR_RETURN(EGL_NO_SURFACE);
 
-    if (window->context.source != GLFW_EGL_CONTEXT_API)
+    if (window->context.creationAPI != GLFW_EGL_CONTEXT_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
         return EGL_NO_SURFACE;

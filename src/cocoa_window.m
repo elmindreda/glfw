@@ -230,7 +230,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)windowDidResize:(NSNotification *)notification
 {
-    if (window->context.source == GLFW_NATIVE_CONTEXT_API)
+    if (window->context.creationAPI == GLFW_NATIVE_CONTEXT_API)
         [window->context.nsgl.object update];
 
     if (_glfw.ns.disabledCursorWindow == window)
@@ -265,7 +265,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)windowDidMove:(NSNotification *)notification
 {
-    if (window->context.source == GLFW_NATIVE_CONTEXT_API)
+    if (window->context.creationAPI == GLFW_NATIVE_CONTEXT_API)
         [window->context.nsgl.object update];
 
     if (_glfw.ns.disabledCursorWindow == window)
@@ -382,7 +382,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)updateLayer
 {
-    if (window->context.source == GLFW_NATIVE_CONTEXT_API)
+    if (window->context.creationAPI == GLFW_NATIVE_CONTEXT_API)
         [window->context.nsgl.object update];
 
     _glfwInputWindowDamage(window);
@@ -923,16 +923,16 @@ GLFWbool _glfwCreateWindowCocoa(_GLFWwindow* window,
     if (!createNativeWindow(window, wndconfig, fbconfig))
         return GLFW_FALSE;
 
-    if (ctxconfig->client != GLFW_NO_API)
+    if (ctxconfig->clientAPI != GLFW_NO_API)
     {
-        if (ctxconfig->source == GLFW_NATIVE_CONTEXT_API)
+        if (ctxconfig->creationAPI == GLFW_NATIVE_CONTEXT_API)
         {
             if (!_glfwInitNSGL())
                 return GLFW_FALSE;
             if (!_glfwCreateContextNSGL(window, ctxconfig, fbconfig))
                 return GLFW_FALSE;
         }
-        else if (ctxconfig->source == GLFW_EGL_CONTEXT_API)
+        else if (ctxconfig->creationAPI == GLFW_EGL_CONTEXT_API)
         {
             // EGL implementation on macOS use CALayer* EGLNativeWindowType so we
             // need to get the layer for EGL window surface creation.
@@ -944,7 +944,7 @@ GLFWbool _glfwCreateWindowCocoa(_GLFWwindow* window,
             if (!_glfwCreateContextEGL(window, ctxconfig, fbconfig))
                 return GLFW_FALSE;
         }
-        else if (ctxconfig->source == GLFW_OSMESA_CONTEXT_API)
+        else if (ctxconfig->creationAPI == GLFW_OSMESA_CONTEXT_API)
         {
             if (!_glfwInitOSMesa())
                 return GLFW_FALSE;

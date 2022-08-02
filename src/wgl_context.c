@@ -107,7 +107,7 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
         if (_glfw.wgl.ARB_multisample)
             ADD_ATTRIB(WGL_SAMPLES_ARB);
 
-        if (ctxconfig->client == GLFW_OPENGL_API)
+        if (ctxconfig->clientAPI == GLFW_OPENGL_API)
         {
             if (_glfw.wgl.ARB_framebuffer_sRGB || _glfw.wgl.EXT_framebuffer_sRGB)
                 ADD_ATTRIB(WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB);
@@ -173,7 +173,7 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
             if (_glfw.wgl.ARB_multisample)
                 current.samples = FIND_ATTRIB_VALUE(WGL_SAMPLES_ARB);
 
-            if (ctxconfig->client == GLFW_OPENGL_API)
+            if (ctxconfig->clientAPI == GLFW_OPENGL_API)
             {
                 if (_glfw.wgl.ARB_framebuffer_sRGB ||
                     _glfw.wgl.EXT_framebuffer_sRGB)
@@ -551,7 +551,7 @@ GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
         return GLFW_FALSE;
     }
 
-    if (ctxconfig->client == GLFW_OPENGL_API)
+    if (ctxconfig->clientAPI == GLFW_OPENGL_API)
     {
         if (ctxconfig->forward)
         {
@@ -589,7 +589,7 @@ GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
     {
         int index = 0, mask = 0, flags = 0;
 
-        if (ctxconfig->client == GLFW_OPENGL_API)
+        if (ctxconfig->clientAPI == GLFW_OPENGL_API)
         {
             if (ctxconfig->forward)
                 flags |= WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
@@ -672,7 +672,7 @@ GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
 
             if (error == (0xc0070000 | ERROR_INVALID_VERSION_ARB))
             {
-                if (ctxconfig->client == GLFW_OPENGL_API)
+                if (ctxconfig->clientAPI == GLFW_OPENGL_API)
                 {
                     _glfwInputError(GLFW_VERSION_UNAVAILABLE,
                                     "WGL: Driver does not support OpenGL version %i.%i",
@@ -699,7 +699,7 @@ GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
             }
             else
             {
-                if (ctxconfig->client == GLFW_OPENGL_API)
+                if (ctxconfig->clientAPI == GLFW_OPENGL_API)
                 {
                     _glfwInputError(GLFW_VERSION_UNAVAILABLE,
                                     "WGL: Failed to create OpenGL context");
@@ -759,7 +759,7 @@ GLFWAPI HGLRC glfwGetWGLContext(GLFWwindow* handle)
         return NULL;
     }
 
-    if (window->context.source != GLFW_NATIVE_CONTEXT_API)
+    if (window->context.creationAPI != GLFW_NATIVE_CONTEXT_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
         return NULL;

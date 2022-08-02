@@ -1964,23 +1964,23 @@ GLFWbool _glfwCreateWindowX11(_GLFWwindow* window,
     Visual* visual = NULL;
     int depth;
 
-    if (ctxconfig->client != GLFW_NO_API)
+    if (ctxconfig->clientAPI != GLFW_NO_API)
     {
-        if (ctxconfig->source == GLFW_NATIVE_CONTEXT_API)
+        if (ctxconfig->creationAPI == GLFW_NATIVE_CONTEXT_API)
         {
             if (!_glfwInitGLX())
                 return GLFW_FALSE;
             if (!_glfwChooseVisualGLX(wndconfig, ctxconfig, fbconfig, &visual, &depth))
                 return GLFW_FALSE;
         }
-        else if (ctxconfig->source == GLFW_EGL_CONTEXT_API)
+        else if (ctxconfig->creationAPI == GLFW_EGL_CONTEXT_API)
         {
             if (!_glfwInitEGL())
                 return GLFW_FALSE;
             if (!_glfwChooseVisualEGL(wndconfig, ctxconfig, fbconfig, &visual, &depth))
                 return GLFW_FALSE;
         }
-        else if (ctxconfig->source == GLFW_OSMESA_CONTEXT_API)
+        else if (ctxconfig->creationAPI == GLFW_OSMESA_CONTEXT_API)
         {
             if (!_glfwInitOSMesa())
                 return GLFW_FALSE;
@@ -1996,19 +1996,19 @@ GLFWbool _glfwCreateWindowX11(_GLFWwindow* window,
     if (!createNativeWindow(window, wndconfig, visual, depth))
         return GLFW_FALSE;
 
-    if (ctxconfig->client != GLFW_NO_API)
+    if (ctxconfig->clientAPI != GLFW_NO_API)
     {
-        if (ctxconfig->source == GLFW_NATIVE_CONTEXT_API)
+        if (ctxconfig->creationAPI == GLFW_NATIVE_CONTEXT_API)
         {
             if (!_glfwCreateContextGLX(window, ctxconfig, fbconfig))
                 return GLFW_FALSE;
         }
-        else if (ctxconfig->source == GLFW_EGL_CONTEXT_API)
+        else if (ctxconfig->creationAPI == GLFW_EGL_CONTEXT_API)
         {
             if (!_glfwCreateContextEGL(window, ctxconfig, fbconfig))
                 return GLFW_FALSE;
         }
-        else if (ctxconfig->source == GLFW_OSMESA_CONTEXT_API)
+        else if (ctxconfig->creationAPI == GLFW_OSMESA_CONTEXT_API)
         {
             if (!_glfwCreateContextOSMesa(window, ctxconfig, fbconfig))
                 return GLFW_FALSE;

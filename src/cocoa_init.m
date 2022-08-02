@@ -413,7 +413,7 @@ static GLFWbool initializeTIS(void)
 {
     for (_GLFWwindow* window = _glfw.windowListHead;  window;  window = window->next)
     {
-        if (window->context.client != GLFW_NO_API)
+        if (window->context.clientAPI != GLFW_NO_API)
             [window->context.nsgl.object update];
     }
 

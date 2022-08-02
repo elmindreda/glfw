@@ -2019,10 +2019,10 @@ GLFWbool _glfwCreateWindowWayland(_GLFWwindow* window,
     if (!createNativeSurface(window, wndconfig, fbconfig))
         return GLFW_FALSE;
 
-    if (ctxconfig->client != GLFW_NO_API)
+    if (ctxconfig->clientAPI != GLFW_NO_API)
     {
-        if (ctxconfig->source == GLFW_EGL_CONTEXT_API ||
-            ctxconfig->source == GLFW_NATIVE_CONTEXT_API)
+        if (ctxconfig->creationAPI == GLFW_EGL_CONTEXT_API ||
+            ctxconfig->creationAPI == GLFW_NATIVE_CONTEXT_API)
         {
             window->wl.egl.window = wl_egl_window_create(window->wl.surface,
                                                          wndconfig->width,
@@ -2039,7 +2039,7 @@ GLFWbool _glfwCreateWindowWayland(_GLFWwindow* window,
             if (!_glfwCreateContextEGL(window, ctxconfig, fbconfig))
                 return GLFW_FALSE;
         }
-        else if (ctxconfig->source == GLFW_OSMESA_CONTEXT_API)
+        else if (ctxconfig->creationAPI == GLFW_OSMESA_CONTEXT_API)
         {
             if (!_glfwInitOSMesa())
                 return GLFW_FALSE;

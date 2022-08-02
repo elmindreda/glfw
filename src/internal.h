@@ -432,8 +432,8 @@ struct _GLFWwndconfig
 //
 struct _GLFWctxconfig
 {
-    int           client;
-    int           source;
+    int           clientAPI;
+    int           creationAPI;
     int           major;
     int           minor;
     GLFWbool      forward;
@@ -480,8 +480,8 @@ struct _GLFWfbconfig
 //
 struct _GLFWcontext
 {
-    int                 client;
-    int                 source;
+    int                 clientAPI;
+    int                 creationAPI;
     int                 major, minor, revision;
     GLFWbool            forward, debug, noerror;
     int                 profile;

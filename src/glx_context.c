@@ -460,7 +460,7 @@ GLFWbool _glfwCreateContextGLX(_GLFWwindow* window,
         return GLFW_FALSE;
     }
 
-    if (ctxconfig->client == GLFW_OPENGL_ES_API)
+    if (ctxconfig->clientAPI == GLFW_OPENGL_ES_API)
     {
         if (!_glfw.glx.ARB_create_context ||
             !_glfw.glx.ARB_create_context_profile ||
@@ -499,7 +499,7 @@ GLFWbool _glfwCreateContextGLX(_GLFWwindow* window,
     {
         int index = 0, mask = 0, flags = 0;
 
-        if (ctxconfig->client == GLFW_OPENGL_API)
+        if (ctxconfig->clientAPI == GLFW_OPENGL_API)
         {
             if (ctxconfig->forward)
                 flags |= GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
@@ -588,7 +588,7 @@ GLFWbool _glfwCreateContextGLX(_GLFWwindow* window,
         if (!window->context.glx.handle)
         {
             if (_glfw.x11.errorCode == _glfw.glx.errorBase + GLXBadProfileARB &&
-                ctxconfig->client == GLFW_OPENGL_API &&
+                ctxconfig->clientAPI == GLFW_OPENGL_API &&
                 ctxconfig->profile == GLFW_OPENGL_ANY_PROFILE &&
                 ctxconfig->forward == GLFW_FALSE)
             {
@@ -679,7 +679,7 @@ GLFWAPI GLXContext glfwGetGLXContext(GLFWwindow* handle)
         return NULL;
     }
 
-    if (window->context.source != GLFW_NATIVE_CONTEXT_API)
+    if (window->context.creationAPI != GLFW_NATIVE_CONTEXT_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
         return NULL;
@@ -699,7 +699,7 @@ GLFWAPI GLXWindow glfwGetGLXWindow(GLFWwindow* handle)
         return None;
     }
 
-    if (window->context.source != GLFW_NATIVE_CONTEXT_API)
+    if (window->context.creationAPI != GLFW_NATIVE_CONTEXT_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
         return None;

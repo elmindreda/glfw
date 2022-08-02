@@ -161,7 +161,7 @@ GLFWbool _glfwCreateContextNSGL(_GLFWwindow* window,
                                 const _GLFWctxconfig* ctxconfig,
                                 const _GLFWfbconfig* fbconfig)
 {
-    if (ctxconfig->client == GLFW_OPENGL_ES_API)
+    if (ctxconfig->clientAPI == GLFW_OPENGL_ES_API)
     {
         _glfwInputError(GLFW_API_UNAVAILABLE,
                         "NSGL: OpenGL ES is not available on macOS");
@@ -367,7 +367,7 @@ GLFWAPI id glfwGetNSGLContext(GLFWwindow* handle)
         return nil;
     }
 
-    if (window->context.source != GLFW_NATIVE_CONTEXT_API)
+    if (window->context.creationAPI != GLFW_NATIVE_CONTEXT_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
         return nil;

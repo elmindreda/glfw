@@ -260,10 +260,10 @@ void glfwDefaultWindowHints(void)
 
     // The default is OpenGL with minimum version 1.0
     memset(&_glfw.hints.context, 0, sizeof(_glfw.hints.context));
-    _glfw.hints.context.client = GLFW_OPENGL_API;
-    _glfw.hints.context.source = GLFW_NATIVE_CONTEXT_API;
-    _glfw.hints.context.major  = 1;
-    _glfw.hints.context.minor  = 0;
+    _glfw.hints.context.clientAPI   = GLFW_OPENGL_API;
+    _glfw.hints.context.creationAPI = GLFW_NATIVE_CONTEXT_API;
+    _glfw.hints.context.major       = 1;
+    _glfw.hints.context.minor       = 0;
 
     // The default is a focused, visible, resizable window with decorations
     memset(&_glfw.hints.window, 0, sizeof(_glfw.hints.window));
@@ -398,10 +398,10 @@ GLFWAPI void glfwWindowHint(int hint, int value)
             _glfw.hints.window.mousePassthrough = value ? GLFW_TRUE : GLFW_FALSE;
             return;
         case GLFW_CLIENT_API:
-            _glfw.hints.context.client = value;
+            _glfw.hints.context.clientAPI = value;
             return;
         case GLFW_CONTEXT_CREATION_API:
-            _glfw.hints.context.source = value;
+            _glfw.hints.context.creationAPI = value;
             return;
         case GLFW_CONTEXT_VERSION_MAJOR:
             _glfw.hints.context.major = value;
@@ -881,9 +881,9 @@ GLFWAPI int glfwGetWindowAttrib(GLFWwindow* handle, int attrib)
         case GLFW_DOUBLEBUFFER:
             return window->doublebuffer;
         case GLFW_CLIENT_API:
-            return window->context.client;
+            return window->context.clientAPI;
         case GLFW_CONTEXT_CREATION_API:
-            return window->context.source;
+            return window->context.creationAPI;
         case GLFW_CONTEXT_VERSION_MAJOR:
             return window->context.major;
         case GLFW_CONTEXT_VERSION_MINOR:

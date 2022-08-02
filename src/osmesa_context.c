@@ -207,7 +207,7 @@ GLFWbool _glfwCreateContextOSMesa(_GLFWwindow* window,
                           fbconfig->accumBlueBits +
                           fbconfig->accumAlphaBits;
 
-    if (ctxconfig->client == GLFW_OPENGL_ES_API)
+    if (ctxconfig->clientAPI == GLFW_OPENGL_ES_API)
     {
         _glfwInputError(GLFW_API_UNAVAILABLE,
                         "OSMesa: OpenGL ES is not available on OSMesa");
@@ -304,7 +304,7 @@ GLFWAPI int glfwGetOSMesaColorBuffer(GLFWwindow* handle, int* width,
 
     _GLFW_REQUIRE_INIT_OR_RETURN(GLFW_FALSE);
 
-    if (window->context.source != GLFW_OSMESA_CONTEXT_API)
+    if (window->context.creationAPI != GLFW_OSMESA_CONTEXT_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
         return GLFW_FALSE;
@@ -343,7 +343,7 @@ GLFWAPI int glfwGetOSMesaDepthBuffer(GLFWwindow* handle,
 
     _GLFW_REQUIRE_INIT_OR_RETURN(GLFW_FALSE);
 
-    if (window->context.source != GLFW_OSMESA_CONTEXT_API)
+    if (window->context.creationAPI != GLFW_OSMESA_CONTEXT_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
         return GLFW_FALSE;
@@ -375,7 +375,7 @@ GLFWAPI OSMesaContext glfwGetOSMesaContext(GLFWwindow* handle)
     _GLFWwindow* window = (_GLFWwindow*) handle;
     _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
 
-    if (window->context.source != GLFW_OSMESA_CONTEXT_API)
+    if (window->context.creationAPI != GLFW_OSMESA_CONTEXT_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
         return NULL;
