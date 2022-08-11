@@ -42,20 +42,20 @@ static void makeContextCurrentOSMesa(_GLFWwindow* window)
         _glfw.platform.getFramebufferSize(window, &width, &height);
 
         // Check to see if we need to allocate a new buffer
-        if ((window->context.osmesa.buffer == NULL) ||
-            (width != window->context.osmesa.width) ||
-            (height != window->context.osmesa.height))
+        if ((window->osmesa.buffer == NULL) ||
+            (width != window->osmesa.width) ||
+            (height != window->osmesa.height))
         {
-            _glfw_free(window->context.osmesa.buffer);
+            _glfw_free(window->osmesa.buffer);
 
             // Allocate the new buffer (width * height * 8-bit RGBA)
-            window->context.osmesa.buffer = _glfw_calloc(4, (size_t) width * height);
-            window->context.osmesa.width  = width;
-            window->context.osmesa.height = height;
+            window->osmesa.buffer = _glfw_calloc(4, (size_t) width * height);
+            window->osmesa.width  = width;
+            window->osmesa.height = height;
         }
 
         if (!OSMesaMakeCurrent(window->context.osmesa.handle,
-                               window->context.osmesa.buffer,
+                               window->osmesa.buffer,
                                GL_UNSIGNED_BYTE,
                                width, height))
         {
@@ -81,11 +81,11 @@ static void destroyContextOSMesa(_GLFWwindow* window)
         window->context.osmesa.handle = NULL;
     }
 
-    if (window->context.osmesa.buffer)
+    if (window->osmesa.buffer)
     {
-        _glfw_free(window->context.osmesa.buffer);
-        window->context.osmesa.width = 0;
-        window->context.osmesa.height = 0;
+        _glfw_free(window->osmesa.buffer);
+        window->osmesa.width = 0;
+        window->osmesa.height = 0;
     }
 }
 
@@ -277,8 +277,9 @@ GLFWbool _glfwCreateContextOSMesa(_GLFWwindow* window,
         return GLFW_FALSE;
     }
 
+    window->swapBuffers = swapBuffersOSMesa;
+
     window->context.makeCurrent = makeContextCurrentOSMesa;
-    window->context.swapBuffers = swapBuffersOSMesa;
     window->context.swapInterval = swapIntervalOSMesa;
     window->context.extensionSupported = extensionSupportedOSMesa;
     window->context.getProcAddress = getProcAddressOSMesa;

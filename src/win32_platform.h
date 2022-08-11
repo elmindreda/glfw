@@ -363,17 +363,23 @@ typedef VkBool32 (APIENTRY *PFN_vkGetPhysicalDeviceWin32PresentationSupportKHR)(
 #define GLFW_WIN32_MONITOR_STATE        _GLFWmonitorWin32 win32;
 #define GLFW_WIN32_CURSOR_STATE         _GLFWcursorWin32  win32;
 
+#define GLFW_WGL_FRAMEBUFFER_STATE      _GLFWframebufferWGL wgl;
 #define GLFW_WGL_CONTEXT_STATE          _GLFWcontextWGL wgl;
 #define GLFW_WGL_LIBRARY_CONTEXT_STATE  _GLFWlibraryWGL wgl;
 
+// WGL-specific per-framebuffer data
+//
+typedef struct _GLFWframebufferWGL
+{
+    HDC       dc;
+    int       interval;
+} _GLFWframebufferWGL;
 
 // WGL-specific per-context data
 //
 typedef struct _GLFWcontextWGL
 {
-    HDC       dc;
     HGLRC     handle;
-    int       interval;
 } _GLFWcontextWGL;
 
 // WGL-specific global data

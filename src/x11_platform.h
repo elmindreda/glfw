@@ -460,16 +460,22 @@ typedef VkBool32 (APIENTRY *PFN_vkGetPhysicalDeviceXcbPresentationSupportKHR)(Vk
 #define GLFW_X11_MONITOR_STATE          _GLFWmonitorX11 x11;
 #define GLFW_X11_CURSOR_STATE           _GLFWcursorX11 x11;
 
+#define GLFW_GLX_FRAMEBUFFER_STATE      _GLFWframebufferGLX glx;
 #define GLFW_GLX_CONTEXT_STATE          _GLFWcontextGLX glx;
 #define GLFW_GLX_LIBRARY_CONTEXT_STATE  _GLFWlibraryGLX glx;
 
+// GLX-specific per-framebuffer data
+//
+typedef struct _GLFWframebufferGLX
+{
+    GLXWindow       window;
+} _GLFWframebufferGLX;
 
 // GLX-specific per-context data
 //
 typedef struct _GLFWcontextGLX
 {
     GLXContext      handle;
-    GLXWindow       window;
 } _GLFWcontextGLX;
 
 // GLX-specific global data

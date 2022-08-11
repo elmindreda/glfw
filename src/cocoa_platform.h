@@ -105,6 +105,7 @@ typedef VkResult (APIENTRY *PFN_vkCreateMetalSurfaceEXT)(VkInstance,const VkMeta
 #define GLFW_COCOA_MONITOR_STATE        _GLFWmonitorNS ns;
 #define GLFW_COCOA_CURSOR_STATE         _GLFWcursorNS  ns;
 
+#define GLFW_NSGL_FRAMEBUFFER_STATE     _GLFWframebufferNSGL nsgl;
 #define GLFW_NSGL_CONTEXT_STATE         _GLFWcontextNSGL nsgl;
 #define GLFW_NSGL_LIBRARY_CONTEXT_STATE _GLFWlibraryNSGL nsgl;
 
@@ -117,12 +118,17 @@ typedef void* (*PFN_TISGetInputSourceProperty)(TISInputSourceRef,CFStringRef);
 typedef UInt8 (*PFN_LMGetKbdType)(void);
 #define LMGetKbdType _glfw.ns.tis.GetKbdType
 
+// NSGL-specific per-framebuffer data
+//
+typedef struct _GLFWframebufferNSGL
+{
+    id                pixelFormat;
+} _GLFWframebufferNSGL;
 
 // NSGL-specific per-context data
 //
 typedef struct _GLFWcontextNSGL
 {
-    id                pixelFormat;
     id                object;
 } _GLFWcontextNSGL;
 

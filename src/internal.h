@@ -493,24 +493,18 @@ struct _GLFWcontext
     PFNGLGETSTRINGPROC   GetString;
 
     void (*makeCurrent)(_GLFWwindow*);
-    void (*swapBuffers)(_GLFWwindow*);
     void (*swapInterval)(int);
     int (*extensionSupported)(const char*);
     GLFWglproc (*getProcAddress)(const char*);
     void (*destroy)(_GLFWwindow*);
 
     struct {
-        EGLConfig       config;
         EGLContext      handle;
-        EGLSurface      surface;
         void*           client;
     } egl;
 
     struct {
         OSMesaContext   handle;
-        int             width;
-        int             height;
-        void*           buffer;
     } osmesa;
 
     // This is defined in platform.h
@@ -532,7 +526,6 @@ struct _GLFWwindow
     GLFWbool            mousePassthrough;
     GLFWbool            shouldClose;
     void*               userPointer;
-    GLFWbool            doublebuffer;
     GLFWvidmode         videoMode;
     _GLFWmonitor*       monitor;
     _GLFWcursor*        cursor;
@@ -575,6 +568,24 @@ struct _GLFWwindow
 
     // This is defined in platform.h
     GLFW_PLATFORM_WINDOW_STATE
+
+    void (*swapBuffers)(_GLFWwindow*);
+
+    GLFWbool            doublebuffer;
+
+    struct {
+        EGLConfig       config;
+        EGLSurface      surface;
+    } egl;
+
+    struct {
+        int             width;
+        int             height;
+        void*           buffer;
+    } osmesa;
+
+    // This is defined in platform.h
+    GLFW_PLATFORM_FRAMEBUFFER_STATE
 };
 
 // Monitor structure

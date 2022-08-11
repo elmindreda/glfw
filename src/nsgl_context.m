@@ -116,8 +116,8 @@ static void destroyContextNSGL(_GLFWwindow* window)
 {
     @autoreleasepool {
 
-    [window->context.nsgl.pixelFormat release];
-    window->context.nsgl.pixelFormat = nil;
+    [window->nsgl.pixelFormat release];
+    window->nsgl.pixelFormat = nil;
 
     [window->context.nsgl.object release];
     window->context.nsgl.object = nil;
@@ -305,9 +305,8 @@ GLFWbool _glfwCreateContextNSGL(_GLFWwindow* window,
 #undef ADD_ATTRIB
 #undef SET_ATTRIB
 
-    window->context.nsgl.pixelFormat =
-        [[NSOpenGLPixelFormat alloc] initWithAttributes:attribs];
-    if (window->context.nsgl.pixelFormat == nil)
+    window->nsgl.pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attribs];
+    if (window->nsgl.pixelFormat == nil)
     {
         _glfwInputError(GLFW_FORMAT_UNAVAILABLE,
                         "NSGL: Failed to find a suitable pixel format");
@@ -320,7 +319,7 @@ GLFWbool _glfwCreateContextNSGL(_GLFWwindow* window,
         share = ctxconfig->share->context.nsgl.object;
 
     window->context.nsgl.object =
-        [[NSOpenGLContext alloc] initWithFormat:window->context.nsgl.pixelFormat
+        [[NSOpenGLContext alloc] initWithFormat:window->nsgl.pixelFormat
                                    shareContext:share];
     if (window->context.nsgl.object == nil)
     {
@@ -340,8 +339,9 @@ GLFWbool _glfwCreateContextNSGL(_GLFWwindow* window,
 
     [window->context.nsgl.object setView:window->ns.view];
 
+    window->swapBuffers = swapBuffersNSGL;
+
     window->context.makeCurrent = makeContextCurrentNSGL;
-    window->context.swapBuffers = swapBuffersNSGL;
     window->context.swapInterval = swapIntervalNSGL;
     window->context.extensionSupported = extensionSupportedNSGL;
     window->context.getProcAddress = getProcAddressNSGL;

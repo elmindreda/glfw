@@ -535,7 +535,7 @@ GLFWbool _glfwRefreshContextAttribs(_GLFWwindow* window,
         glClear(GL_COLOR_BUFFER_BIT);
 
         if (window->doublebuffer)
-            window->context.swapBuffers(window);
+            window->swapBuffers(window);
     }
 
     glfwMakeContextCurrent((GLFWwindow*) previous);
@@ -621,7 +621,7 @@ GLFWAPI void glfwSwapBuffers(GLFWwindow* handle)
         return;
     }
 
-    window->context.swapBuffers(window);
+    window->swapBuffers(window);
 }
 
 GLFWAPI void glfwSwapInterval(int interval)

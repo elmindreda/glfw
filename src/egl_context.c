@@ -241,8 +241,8 @@ static void makeContextCurrentEGL(_GLFWwindow* window)
     if (window)
     {
         if (!eglMakeCurrent(_glfw.egl.display,
-                            window->context.egl.surface,
-                            window->context.egl.surface,
+                            window->egl.surface,
+                            window->egl.surface,
                             window->context.egl.handle))
         {
             _glfwInputError(GLFW_PLATFORM_ERROR,
@@ -286,7 +286,7 @@ static void swapBuffersEGL(_GLFWwindow* window)
     }
 #endif
 
-    eglSwapBuffers(_glfw.egl.display, window->context.egl.surface);
+    eglSwapBuffers(_glfw.egl.display, window->egl.surface);
 }
 
 static void swapIntervalEGL(int interval)
@@ -335,10 +335,10 @@ static void destroyContextEGL(_GLFWwindow* window)
         }
     }
 
-    if (window->context.egl.surface)
+    if (window->egl.surface)
     {
-        eglDestroySurface(_glfw.egl.display, window->context.egl.surface);
-        window->context.egl.surface = EGL_NO_SURFACE;
+        eglDestroySurface(_glfw.egl.display, window->egl.surface);
+        window->egl.surface = EGL_NO_SURFACE;
     }
 
     if (window->context.egl.handle)
@@ -711,16 +711,16 @@ GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
     //       despite reporting EGL_EXT_platform_base
     if (_glfw.egl.platform && _glfw.egl.platform != EGL_PLATFORM_ANGLE_ANGLE)
     {
-        window->context.egl.surface =
+        window->egl.surface =
             eglCreatePlatformWindowSurfaceEXT(_glfw.egl.display, config, native, attribs);
     }
     else
     {
-        window->context.egl.surface =
+        window->egl.surface =
             eglCreateWindowSurface(_glfw.egl.display, config, native, attribs);
     }
 
-    if (window->context.egl.surface == EGL_NO_SURFACE)
+    if (window->egl.surface == EGL_NO_SURFACE)
     {
         _glfwInputError(GLFW_PLATFORM_ERROR,
                         "EGL: Failed to create window surface: %s",
@@ -728,7 +728,7 @@ GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
         return GLFW_FALSE;
     }
 
-    window->context.egl.config = config;
+    window->egl.config = config;
 
     // Load the appropriate client library
     if (!_glfw.egl.KHR_get_all_proc_addresses)
@@ -815,8 +815,9 @@ GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
         }
     }
 
+    window->swapBuffers = swapBuffersEGL;
+
     window->context.makeCurrent = makeContextCurrentEGL;
-    window->context.swapBuffers = swapBuffersEGL;
     window->context.swapInterval = swapIntervalEGL;
     window->context.extensionSupported = extensionSupportedEGL;
     window->context.getProcAddress = getProcAddressEGL;
@@ -902,6 +903,6 @@ GLFWAPI EGLSurface glfwGetEGLSurface(GLFWwindow* handle)
         return EGL_NO_SURFACE;
     }
 
-    return window->context.egl.surface;
+    return window->egl.surface;
 }
 

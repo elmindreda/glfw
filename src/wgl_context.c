@@ -74,7 +74,7 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
     int values[sizeof(attribs) / sizeof(attribs[0])];
     GLFWbool accelerationAvailable = GLFW_FALSE;
 
-    formatCount = DescribePixelFormat(window->context.wgl.dc,
+    formatCount = DescribePixelFormat(window->wgl.dc,
                                       1,
                                       sizeof(PIXELFORMATDESCRIPTOR),
                                       NULL);
@@ -129,7 +129,7 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
         {
             // Get pixel format attributes through "modern" extension
 
-            if (!wglGetPixelFormatAttribivARB(window->context.wgl.dc,
+            if (!wglGetPixelFormatAttribivARB(window->wgl.dc,
                                               pixelFormat, 0,
                                               attribCount,
                                               attribs, values))
@@ -197,7 +197,7 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
 
             PIXELFORMATDESCRIPTOR pfd;
 
-            if (!DescribePixelFormat(window->context.wgl.dc,
+            if (!DescribePixelFormat(window->wgl.dc,
                                      pixelFormat,
                                      sizeof(PIXELFORMATDESCRIPTOR),
                                      &pfd))
@@ -277,7 +277,7 @@ static void makeContextCurrentWGL(_GLFWwindow* window)
 {
     if (window)
     {
-        if (wglMakeCurrent(window->context.wgl.dc, window->context.wgl.handle))
+        if (wglMakeCurrent(window->wgl.dc, window->context.wgl.handle))
             _glfwPlatformSetTls(&_glfw.contextSlot, window);
         else
         {
@@ -309,21 +309,21 @@ static void swapBuffersWGL(_GLFWwindow* window)
 
             if (SUCCEEDED(DwmIsCompositionEnabled(&enabled)) && enabled)
             {
-                int count = abs(window->context.wgl.interval);
+                int count = abs(window->wgl.interval);
                 while (count--)
                     DwmFlush();
             }
         }
     }
 
-    SwapBuffers(window->context.wgl.dc);
+    SwapBuffers(window->wgl.dc);
 }
 
 static void swapIntervalWGL(int interval)
 {
     _GLFWwindow* window = _glfwPlatformGetTls(&_glfw.contextSlot);
 
-    window->context.wgl.interval = interval;
+    window->wgl.interval = interval;
 
     if (!window->monitor)
     {
@@ -524,8 +524,8 @@ GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
     if (ctxconfig->share)
         share = ctxconfig->share->context.wgl.handle;
 
-    window->context.wgl.dc = GetDC(window->win32.handle);
-    if (!window->context.wgl.dc)
+    window->wgl.dc = GetDC(window->win32.handle);
+    if (!window->wgl.dc)
     {
         _glfwInputError(GLFW_PLATFORM_ERROR,
                         "WGL: Failed to retrieve DC for window");
@@ -536,15 +536,14 @@ GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
     if (!pixelFormat)
         return GLFW_FALSE;
 
-    if (!DescribePixelFormat(window->context.wgl.dc,
-                             pixelFormat, sizeof(pfd), &pfd))
+    if (!DescribePixelFormat(window->wgl.dc, pixelFormat, sizeof(pfd), &pfd))
     {
         _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
                              "WGL: Failed to retrieve PFD for selected pixel format");
         return GLFW_FALSE;
     }
 
-    if (!SetPixelFormat(window->context.wgl.dc, pixelFormat, &pfd))
+    if (!SetPixelFormat(window->wgl.dc, pixelFormat, &pfd))
     {
         _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
                              "WGL: Failed to set selected pixel format");
@@ -665,7 +664,7 @@ GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
         SET_ATTRIB(0, 0);
 
         window->context.wgl.handle =
-            wglCreateContextAttribsARB(window->context.wgl.dc, share, attribs);
+            wglCreateContextAttribsARB(window->wgl.dc, share, attribs);
         if (!window->context.wgl.handle)
         {
             const DWORD error = GetLastError();
@@ -716,7 +715,7 @@ GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
     }
     else
     {
-        window->context.wgl.handle = wglCreateContext(window->context.wgl.dc);
+        window->context.wgl.handle = wglCreateContext(window->wgl.dc);
         if (!window->context.wgl.handle)
         {
             _glfwInputErrorWin32(GLFW_VERSION_UNAVAILABLE,
@@ -735,8 +734,9 @@ GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
         }
     }
 
+    window->swapBuffers = swapBuffersWGL;
+
     window->context.makeCurrent = makeContextCurrentWGL;
-    window->context.swapBuffers = swapBuffersWGL;
     window->context.swapInterval = swapIntervalWGL;
     window->context.extensionSupported = extensionSupportedWGL;
     window->context.getProcAddress = getProcAddressWGL;

@@ -155,7 +155,7 @@ static void makeContextCurrentGLX(_GLFWwindow* window)
     if (window)
     {
         if (!glXMakeCurrent(_glfw.x11.display,
-                            window->context.glx.window,
+                            window->glx.window,
                             window->context.glx.handle))
         {
             _glfwInputError(GLFW_PLATFORM_ERROR,
@@ -178,7 +178,7 @@ static void makeContextCurrentGLX(_GLFWwindow* window)
 
 static void swapBuffersGLX(_GLFWwindow* window)
 {
-    glXSwapBuffers(_glfw.x11.display, window->context.glx.window);
+    glXSwapBuffers(_glfw.x11.display, window->glx.window);
 }
 
 static void swapIntervalGLX(int interval)
@@ -188,7 +188,7 @@ static void swapIntervalGLX(int interval)
     if (_glfw.glx.EXT_swap_control)
     {
         _glfw.glx.SwapIntervalEXT(_glfw.x11.display,
-                                  window->context.glx.window,
+                                  window->glx.window,
                                   interval);
     }
     else if (_glfw.glx.MESA_swap_control)
@@ -228,10 +228,10 @@ static GLFWglproc getProcAddressGLX(const char* procname)
 
 static void destroyContextGLX(_GLFWwindow* window)
 {
-    if (window->context.glx.window)
+    if (window->glx.window)
     {
-        glXDestroyWindow(_glfw.x11.display, window->context.glx.window);
-        window->context.glx.window = None;
+        glXDestroyWindow(_glfw.x11.display, window->glx.window);
+        window->glx.window = None;
     }
 
     if (window->context.glx.handle)
@@ -611,16 +611,17 @@ GLFWbool _glfwCreateContextGLX(_GLFWwindow* window,
         return GLFW_FALSE;
     }
 
-    window->context.glx.window =
+    window->glx.window =
         glXCreateWindow(_glfw.x11.display, native, window->x11.handle, NULL);
-    if (!window->context.glx.window)
+    if (!window->glx.window)
     {
         _glfwInputError(GLFW_PLATFORM_ERROR, "GLX: Failed to create window");
         return GLFW_FALSE;
     }
 
+    window->swapBuffers = swapBuffersGLX;
+
     window->context.makeCurrent = makeContextCurrentGLX;
-    window->context.swapBuffers = swapBuffersGLX;
     window->context.swapInterval = swapIntervalGLX;
     window->context.extensionSupported = extensionSupportedGLX;
     window->context.getProcAddress = getProcAddressGLX;
@@ -705,7 +706,7 @@ GLFWAPI GLXWindow glfwGetGLXWindow(GLFWwindow* handle)
         return None;
     }
 
-    return window->context.glx.window;
+    return window->glx.window;
 }
 
 #endif // _GLFW_X11
