@@ -228,23 +228,12 @@ static GLFWglproc getProcAddressGLX(const char* procname)
 
 static void destroyContextGLX(_GLFWwindow* window)
 {
-    if (window->glx.window)
-    {
-        glXDestroyWindow(_glfw.x11.display, window->glx.window);
-        window->glx.window = None;
-    }
-
     if (window->context.glx.handle)
     {
         glXDestroyContext(_glfw.x11.display, window->context.glx.handle);
         window->context.glx.handle = NULL;
     }
 }
-
-
-//////////////////////////////////////////////////////////////////////////
-//////                       GLFW internal API                      //////
-//////////////////////////////////////////////////////////////////////////
 
 // Initialize GLX
 //
@@ -433,6 +422,32 @@ void _glfwTerminateGLX(void)
     }
 }
 
+// Create the GLX window
+//
+static GLFWbool createFramebufferGLX(_GLFWwindow* window, const _GLFWfbconfig* fbconfig)
+{
+    window->glx.window =
+        glXCreateWindow(_glfw.x11.display, window->glx.config, window->x11.handle, NULL);
+    if (!window->glx.window)
+    {
+        _glfwInputError(GLFW_PLATFORM_ERROR, "GLX: Failed to create window");
+        return GLFW_FALSE;
+    }
+
+    return GLFW_TRUE;
+}
+
+// Destroy the GLX window
+//
+static void destroyFramebufferGLX(_GLFWwindow* window)
+{
+    if (window->glx.window)
+    {
+        glXDestroyWindow(_glfw.x11.display, window->glx.window);
+        window->glx.window = None;
+    }
+}
+
 #define SET_ATTRIB(a, v) \
 { \
     assert(((size_t) index + 1) < sizeof(attribs) / sizeof(attribs[0])); \
@@ -442,23 +457,13 @@ void _glfwTerminateGLX(void)
 
 // Create the OpenGL or OpenGL ES context
 //
-GLFWbool _glfwCreateContextGLX(_GLFWwindow* window,
-                               const _GLFWctxconfig* ctxconfig,
-                               const _GLFWfbconfig* fbconfig)
+static GLFWbool createContextGLX(_GLFWwindow* window, const _GLFWctxconfig* ctxconfig)
 {
     int attribs[40];
-    GLXFBConfig native = NULL;
     GLXContext share = NULL;
 
     if (ctxconfig->share)
         share = ctxconfig->share->context.glx.handle;
-
-    if (!chooseGLXFBConfig(fbconfig, &native))
-    {
-        _glfwInputError(GLFW_FORMAT_UNAVAILABLE,
-                        "GLX: Failed to find a suitable GLXFBConfig");
-        return GLFW_FALSE;
-    }
 
     if (ctxconfig->clientAPI == GLFW_OPENGL_ES_API)
     {
@@ -576,7 +581,7 @@ GLFWbool _glfwCreateContextGLX(_GLFWwindow* window,
 
         window->context.glx.handle =
             _glfw.glx.CreateContextAttribsARB(_glfw.x11.display,
-                                              native,
+                                              window->glx.config,
                                               share,
                                               True,
                                               attribs);
@@ -593,14 +598,14 @@ GLFWbool _glfwCreateContextGLX(_GLFWwindow* window,
                 ctxconfig->forward == GLFW_FALSE)
             {
                 window->context.glx.handle =
-                    createLegacyContextGLX(window, native, share);
+                    createLegacyContextGLX(window, window->glx.config, share);
             }
         }
     }
     else
     {
         window->context.glx.handle =
-            createLegacyContextGLX(window, native, share);
+            createLegacyContextGLX(window, window->glx.config, share);
     }
 
     _glfwReleaseErrorHandlerX11();
@@ -610,16 +615,6 @@ GLFWbool _glfwCreateContextGLX(_GLFWwindow* window,
         _glfwInputErrorX11(GLFW_VERSION_UNAVAILABLE, "GLX: Failed to create context");
         return GLFW_FALSE;
     }
-
-    window->glx.window =
-        glXCreateWindow(_glfw.x11.display, native, window->x11.handle, NULL);
-    if (!window->glx.window)
-    {
-        _glfwInputError(GLFW_PLATFORM_ERROR, "GLX: Failed to create window");
-        return GLFW_FALSE;
-    }
-
-    window->swapBuffers = swapBuffersGLX;
 
     window->context.makeCurrent = makeContextCurrentGLX;
     window->context.swapInterval = swapIntervalGLX;
@@ -632,35 +627,27 @@ GLFWbool _glfwCreateContextGLX(_GLFWwindow* window,
 
 #undef SET_ATTRIB
 
-// Returns the Visual and depth of the chosen GLXFBConfig
-//
-GLFWbool _glfwChooseVisualGLX(const _GLFWwndconfig* wndconfig,
-                              const _GLFWctxconfig* ctxconfig,
-                              const _GLFWfbconfig* fbconfig,
-                              Visual** visual, int* depth)
-{
-    GLXFBConfig native;
-    XVisualInfo* result;
 
-    if (!chooseGLXFBConfig(fbconfig, &native))
+//////////////////////////////////////////////////////////////////////////
+//////                       GLFW internal API                      //////
+//////////////////////////////////////////////////////////////////////////
+
+GLFWbool _glfwSetFBConfigGLX(_GLFWwindow* window,
+                             const _GLFWctxconfig* ctxconfig,
+                             const _GLFWfbconfig* fbconfig)
+{
+    if (!chooseGLXFBConfig(fbconfig, &window->glx.config))
     {
         _glfwInputError(GLFW_FORMAT_UNAVAILABLE,
                         "GLX: Failed to find a suitable GLXFBConfig");
         return GLFW_FALSE;
     }
 
-    result = glXGetVisualFromFBConfig(_glfw.x11.display, native);
-    if (!result)
-    {
-        _glfwInputError(GLFW_PLATFORM_ERROR,
-                        "GLX: Failed to retrieve Visual for GLXFBConfig");
-        return GLFW_FALSE;
-    }
+    window->createFramebuffer = createFramebufferGLX;
+    window->destroyFramebuffer = destroyFramebufferGLX;
+    window->createContext = createContextGLX;
+    window->swapBuffers = swapBuffersGLX;
 
-    *visual = result->visual;
-    *depth  = result->depth;
-
-    XFree(result);
     return GLFW_TRUE;
 }
 
@@ -700,7 +687,7 @@ GLFWAPI GLXWindow glfwGetGLXWindow(GLFWwindow* handle)
         return None;
     }
 
-    if (window->context.creationAPI != GLFW_NATIVE_CONTEXT_API)
+    if (window->framebufferAPI != GLFW_NATIVE_CONTEXT_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
         return None;

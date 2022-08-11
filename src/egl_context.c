@@ -335,16 +335,75 @@ static void destroyContextEGL(_GLFWwindow* window)
         }
     }
 
-    if (window->egl.surface)
-    {
-        eglDestroySurface(_glfw.egl.display, window->egl.surface);
-        window->egl.surface = EGL_NO_SURFACE;
-    }
-
     if (window->context.egl.handle)
     {
         eglDestroyContext(_glfw.egl.display, window->context.egl.handle);
         window->context.egl.handle = EGL_NO_CONTEXT;
+    }
+}
+
+#define SET_ATTRIB(a, v) \
+{ \
+    assert(((size_t) index + 1) < sizeof(attribs) / sizeof(attribs[0])); \
+    attribs[index++] = a; \
+    attribs[index++] = v; \
+}
+
+static GLFWbool createFramebufferEGL(_GLFWwindow* window, const _GLFWfbconfig* fbconfig)
+{
+    EGLint attribs[40];
+    EGLNativeWindowType native;
+    int index = 0;
+
+    if (fbconfig->sRGB)
+    {
+        if (_glfw.egl.KHR_gl_colorspace)
+            SET_ATTRIB(EGL_GL_COLORSPACE_KHR, EGL_GL_COLORSPACE_SRGB_KHR);
+    }
+
+    if (!fbconfig->doublebuffer)
+        SET_ATTRIB(EGL_RENDER_BUFFER, EGL_SINGLE_BUFFER);
+
+    if (_glfw.egl.EXT_present_opaque)
+        SET_ATTRIB(EGL_PRESENT_OPAQUE_EXT, !fbconfig->transparent);
+
+    SET_ATTRIB(EGL_NONE, EGL_NONE);
+
+    native = _glfw.platform.getEGLNativeWindow(window);
+    // HACK: ANGLE does not implement eglCreatePlatformWindowSurfaceEXT
+    //       despite reporting EGL_EXT_platform_base
+    if (_glfw.egl.platform && _glfw.egl.platform != EGL_PLATFORM_ANGLE_ANGLE)
+    {
+        window->egl.surface = eglCreatePlatformWindowSurfaceEXT(_glfw.egl.display,
+                                                                window->egl.config,
+                                                                native, attribs);
+    }
+    else
+    {
+        window->egl.surface = eglCreateWindowSurface(_glfw.egl.display,
+                                                     window->egl.config,
+                                                     native, attribs);
+    }
+
+    if (window->egl.surface == EGL_NO_SURFACE)
+    {
+        _glfwInputError(GLFW_PLATFORM_ERROR,
+                        "EGL: Failed to create window surface: %s",
+                        getEGLErrorString(eglGetError()));
+        return GLFW_FALSE;
+    }
+
+    return GLFW_TRUE;
+}
+
+#undef SET_ATTRIB
+
+static void destroyFramebufferEGL(_GLFWwindow* window)
+{
+    if (window->egl.surface)
+    {
+        eglDestroySurface(_glfw.egl.display, window->egl.surface);
+        window->egl.surface = EGL_NO_SURFACE;
     }
 }
 
@@ -561,27 +620,14 @@ void _glfwTerminateEGL(void)
 
 // Create the OpenGL or OpenGL ES context
 //
-GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
-                               const _GLFWctxconfig* ctxconfig,
-                               const _GLFWfbconfig* fbconfig)
+static GLFWbool createContextEGL(_GLFWwindow* window, const _GLFWctxconfig* ctxconfig)
 {
     EGLint attribs[40];
-    EGLConfig config;
     EGLContext share = NULL;
-    EGLNativeWindowType native;
     int index = 0;
-
-    if (!_glfw.egl.display)
-    {
-        _glfwInputError(GLFW_API_UNAVAILABLE, "EGL: API not available");
-        return GLFW_FALSE;
-    }
 
     if (ctxconfig->share)
         share = ctxconfig->share->context.egl.handle;
-
-    if (!chooseEGLConfig(ctxconfig, fbconfig, &config))
-        return GLFW_FALSE;
 
     if (ctxconfig->clientAPI == GLFW_OPENGL_ES_API)
     {
@@ -679,7 +725,7 @@ GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
     SET_ATTRIB(EGL_NONE, EGL_NONE);
 
     window->context.egl.handle = eglCreateContext(_glfw.egl.display,
-                                                  config, share, attribs);
+                                                  window->egl.config, share, attribs);
 
     if (window->context.egl.handle == EGL_NO_CONTEXT)
     {
@@ -688,47 +734,6 @@ GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
                         getEGLErrorString(eglGetError()));
         return GLFW_FALSE;
     }
-
-    // Set up attributes for surface creation
-    index = 0;
-
-    if (fbconfig->sRGB)
-    {
-        if (_glfw.egl.KHR_gl_colorspace)
-            SET_ATTRIB(EGL_GL_COLORSPACE_KHR, EGL_GL_COLORSPACE_SRGB_KHR);
-    }
-
-    if (!fbconfig->doublebuffer)
-        SET_ATTRIB(EGL_RENDER_BUFFER, EGL_SINGLE_BUFFER);
-
-    if (_glfw.egl.EXT_present_opaque)
-        SET_ATTRIB(EGL_PRESENT_OPAQUE_EXT, !fbconfig->transparent);
-
-    SET_ATTRIB(EGL_NONE, EGL_NONE);
-
-    native = _glfw.platform.getEGLNativeWindow(window);
-    // HACK: ANGLE does not implement eglCreatePlatformWindowSurfaceEXT
-    //       despite reporting EGL_EXT_platform_base
-    if (_glfw.egl.platform && _glfw.egl.platform != EGL_PLATFORM_ANGLE_ANGLE)
-    {
-        window->egl.surface =
-            eglCreatePlatformWindowSurfaceEXT(_glfw.egl.display, config, native, attribs);
-    }
-    else
-    {
-        window->egl.surface =
-            eglCreateWindowSurface(_glfw.egl.display, config, native, attribs);
-    }
-
-    if (window->egl.surface == EGL_NO_SURFACE)
-    {
-        _glfwInputError(GLFW_PLATFORM_ERROR,
-                        "EGL: Failed to create window surface: %s",
-                        getEGLErrorString(eglGetError()));
-        return GLFW_FALSE;
-    }
-
-    window->egl.config = config;
 
     // Load the appropriate client library
     if (!_glfw.egl.KHR_get_all_proc_addresses)
@@ -815,8 +820,6 @@ GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
         }
     }
 
-    window->swapBuffers = swapBuffersEGL;
-
     window->context.makeCurrent = makeContextCurrentEGL;
     window->context.swapInterval = swapIntervalEGL;
     window->context.extensionSupported = extensionSupportedEGL;
@@ -826,47 +829,26 @@ GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
     return GLFW_TRUE;
 }
 
-#undef SET_ATTRIB
-
-// Returns the Visual and depth of the chosen EGLConfig
-//
-#if defined(_GLFW_X11)
-GLFWbool _glfwChooseVisualEGL(const _GLFWwndconfig* wndconfig,
-                              const _GLFWctxconfig* ctxconfig,
-                              const _GLFWfbconfig* fbconfig,
-                              Visual** visual, int* depth)
+GLFWbool _glfwSetFBConfigEGL(_GLFWwindow* window,
+                             const _GLFWctxconfig* ctxconfig,
+                             const _GLFWfbconfig* fbconfig)
 {
-    XVisualInfo* result;
-    XVisualInfo desired;
-    EGLConfig native;
-    EGLint visualID = 0, count = 0;
-    const long vimask = VisualScreenMask | VisualIDMask;
-
-    if (!chooseEGLConfig(ctxconfig, fbconfig, &native))
-        return GLFW_FALSE;
-
-    eglGetConfigAttrib(_glfw.egl.display, native,
-                       EGL_NATIVE_VISUAL_ID, &visualID);
-
-    desired.screen = _glfw.x11.screen;
-    desired.visualid = visualID;
-
-    result = XGetVisualInfo(_glfw.x11.display, vimask, &desired, &count);
-    if (!result)
+    if (!chooseEGLConfig(ctxconfig, fbconfig, &window->egl.config))
     {
-        _glfwInputError(GLFW_PLATFORM_ERROR,
-                        "EGL: Failed to retrieve Visual for EGLConfig");
+        _glfwInputError(GLFW_FORMAT_UNAVAILABLE,
+                        "EGL: Failed to find a suitable EGLConfig");
         return GLFW_FALSE;
     }
 
-    *visual = result->visual;
-    *depth = result->depth;
+    window->createFramebuffer = createFramebufferEGL;
+    window->destroyFramebuffer = destroyFramebufferEGL;
+    window->createContext = createContextEGL;
+    window->swapBuffers = swapBuffersEGL;
 
-    XFree(result);
     return GLFW_TRUE;
 }
-#endif // _GLFW_X11
 
+#undef SET_ATTRIB
 
 //////////////////////////////////////////////////////////////////////////
 //////                        GLFW native API                       //////
@@ -897,7 +879,7 @@ GLFWAPI EGLSurface glfwGetEGLSurface(GLFWwindow* handle)
     _GLFWwindow* window = (_GLFWwindow*) handle;
     _GLFW_REQUIRE_INIT_OR_RETURN(EGL_NO_SURFACE);
 
-    if (window->context.creationAPI != GLFW_EGL_CONTEXT_API)
+    if (window->framebufferAPI != GLFW_EGL_CONTEXT_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
         return EGL_NO_SURFACE;

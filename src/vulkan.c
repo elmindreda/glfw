@@ -318,7 +318,7 @@ GLFWAPI VkResult glfwCreateWindowSurface(VkInstance instance,
         return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
 
-    if (window->context.clientAPI != GLFW_NO_API)
+    if (window->framebufferAPI != GLFW_NO_API)
     {
         _glfwInputError(GLFW_INVALID_VALUE,
                         "Vulkan: Window surface creation requires the window to have the client API set to GLFW_NO_API");

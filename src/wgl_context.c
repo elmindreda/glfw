@@ -74,7 +74,7 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
     int values[sizeof(attribs) / sizeof(attribs[0])];
     GLFWbool accelerationAvailable = GLFW_FALSE;
 
-    formatCount = DescribePixelFormat(window->wgl.dc,
+    formatCount = DescribePixelFormat(GetDC(_glfw.win32.helperWindowHandle),
                                       1,
                                       sizeof(PIXELFORMATDESCRIPTOR),
                                       NULL);
@@ -129,7 +129,7 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
         {
             // Get pixel format attributes through "modern" extension
 
-            if (!wglGetPixelFormatAttribivARB(window->wgl.dc,
+            if (!wglGetPixelFormatAttribivARB(GetDC(_glfw.win32.helperWindowHandle),
                                               pixelFormat, 0,
                                               attribCount,
                                               attribs, values))
@@ -197,7 +197,7 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
 
             PIXELFORMATDESCRIPTOR pfd;
 
-            if (!DescribePixelFormat(window->wgl.dc,
+            if (!DescribePixelFormat(GetDC(_glfw.win32.helperWindowHandle),
                                      pixelFormat,
                                      sizeof(PIXELFORMATDESCRIPTOR),
                                      &pfd))
@@ -375,6 +375,39 @@ static void destroyContextWGL(_GLFWwindow* window)
     }
 }
 
+static GLFWbool createFramebufferWGL(_GLFWwindow* window, const _GLFWfbconfig* fbconfig)
+{
+    PIXELFORMATDESCRIPTOR pfd;
+
+    window->wgl.dc = GetDC(window->win32.handle);
+    if (!window->wgl.dc)
+    {
+        _glfwInputError(GLFW_PLATFORM_ERROR,
+                        "WGL: Failed to retrieve DC for window");
+        return GLFW_FALSE;
+    }
+
+    if (!DescribePixelFormat(window->wgl.dc, window->wgl.pixelFormat, sizeof(pfd), &pfd))
+    {
+        _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
+                             "WGL: Failed to retrieve PFD for selected pixel format");
+        return GLFW_FALSE;
+    }
+
+    if (!SetPixelFormat(window->wgl.dc, window->wgl.pixelFormat, &pfd))
+    {
+        _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
+                             "WGL: Failed to set selected pixel format");
+        return GLFW_FALSE;
+    }
+
+    return GLFW_TRUE;
+}
+
+static void destroyFramebufferWGL(_GLFWwindow* window)
+{
+}
+
 // Initialize WGL
 //
 GLFWbool _glfwInitWGL(void)
@@ -512,43 +545,13 @@ void _glfwTerminateWGL(void)
 
 // Create the OpenGL or OpenGL ES context
 //
-GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
-                               const _GLFWctxconfig* ctxconfig,
-                               const _GLFWfbconfig* fbconfig)
+static GLFWbool createContextWGL(_GLFWwindow* window, const _GLFWctxconfig* ctxconfig)
 {
     int attribs[40];
-    int pixelFormat;
-    PIXELFORMATDESCRIPTOR pfd;
     HGLRC share = NULL;
 
     if (ctxconfig->share)
         share = ctxconfig->share->context.wgl.handle;
-
-    window->wgl.dc = GetDC(window->win32.handle);
-    if (!window->wgl.dc)
-    {
-        _glfwInputError(GLFW_PLATFORM_ERROR,
-                        "WGL: Failed to retrieve DC for window");
-        return GLFW_FALSE;
-    }
-
-    pixelFormat = choosePixelFormatWGL(window, ctxconfig, fbconfig);
-    if (!pixelFormat)
-        return GLFW_FALSE;
-
-    if (!DescribePixelFormat(window->wgl.dc, pixelFormat, sizeof(pfd), &pfd))
-    {
-        _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
-                             "WGL: Failed to retrieve PFD for selected pixel format");
-        return GLFW_FALSE;
-    }
-
-    if (!SetPixelFormat(window->wgl.dc, pixelFormat, &pfd))
-    {
-        _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
-                             "WGL: Failed to set selected pixel format");
-        return GLFW_FALSE;
-    }
 
     if (ctxconfig->clientAPI == GLFW_OPENGL_API)
     {
@@ -734,8 +737,6 @@ GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
         }
     }
 
-    window->swapBuffers = swapBuffersWGL;
-
     window->context.makeCurrent = makeContextCurrentWGL;
     window->context.swapInterval = swapIntervalWGL;
     window->context.extensionSupported = extensionSupportedWGL;
@@ -746,6 +747,22 @@ GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
 }
 
 #undef SET_ATTRIB
+
+GLFWbool _glfwSetFBConfigWGL(_GLFWwindow* window,
+                             const _GLFWctxconfig* ctxconfig,
+                             const _GLFWfbconfig* fbconfig)
+{
+    window->wgl.pixelFormat = choosePixelFormatWGL(window, ctxconfig, fbconfig);
+    if (!window->wgl.pixelFormat)
+        return GLFW_FALSE;
+
+    window->createFramebuffer = createFramebufferWGL;
+    window->destroyFramebuffer = destroyFramebufferWGL;
+    window->createContext = createContextWGL;
+    window->swapBuffers = swapBuffersWGL;
+
+    return GLFW_TRUE;
+}
 
 GLFWAPI HGLRC glfwGetWGLContext(GLFWwindow* handle)
 {

@@ -567,8 +567,12 @@ struct _GLFWwindow
     // This is defined in platform.h
     GLFW_PLATFORM_WINDOW_STATE
 
+    GLFWbool (*createFramebuffer)(_GLFWwindow*,const _GLFWfbconfig*);
+    void (*destroyFramebuffer)(_GLFWwindow*);
+    GLFWbool (*createContext)(_GLFWwindow*,const _GLFWctxconfig*);
     void (*swapBuffers)(_GLFWwindow*);
 
+    int                 framebufferAPI;
     GLFWbool            doublebuffer;
 
     struct {
@@ -577,6 +581,9 @@ struct _GLFWwindow
     } egl;
 
     struct {
+        int             depthBits;
+        int             stencilBits;
+        int             accumBits;
         int             width;
         int             height;
         void*           buffer;
@@ -750,6 +757,9 @@ struct _GLFWplatform
     void (*waitEvents)(void);
     void (*waitEventsTimeout)(double);
     void (*postEmptyEvent)(void);
+    // context
+    GLFWbool (*initContextCreation)(void);
+    GLFWbool (*setFBConfig)(_GLFWwindow*,const _GLFWctxconfig*,const _GLFWfbconfig*);
     // EGL
     EGLenum (*getEGLPlatform)(EGLint**);
     EGLNativeDisplayType (*getEGLNativeDisplay)(void);
@@ -958,9 +968,13 @@ GLFWbool _glfwSelectPlatform(int platformID, _GLFWplatform* platform);
 
 GLFWbool _glfwStringInExtensionString(const char* string, const char* extensions);
 uint32_t _glfwCompareFBConfigs(const _GLFWfbconfig* desired, const _GLFWfbconfig* actual);
-GLFWbool _glfwRefreshContextAttribs(_GLFWwindow* window,
-                                    const _GLFWctxconfig* ctxconfig);
-GLFWbool _glfwIsValidContextConfig(const _GLFWctxconfig* ctxconfig);
+GLFWbool _glfwSetFBConfig(_GLFWwindow* window,
+                          const _GLFWctxconfig* ctxconfig,
+                          const _GLFWfbconfig* fbconfig);
+GLFWbool _glfwCreateFramebuffer(_GLFWwindow* window, const _GLFWfbconfig* fbconfig);
+void _glfwDestroyFramebuffer(_GLFWwindow* window);
+GLFWbool _glfwCreateContext(_GLFWwindow* window, const _GLFWctxconfig* ctxconfig);
+void _glfwDestroyContext(_GLFWwindow* window);
 
 const GLFWvidmode* _glfwChooseVideoMode(_GLFWmonitor* monitor,
                                         const GLFWvidmode* desired);
@@ -982,21 +996,15 @@ void _glfwCenterCursorInContentArea(_GLFWwindow* window);
 
 GLFWbool _glfwInitEGL(void);
 void _glfwTerminateEGL(void);
-GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
-                               const _GLFWctxconfig* ctxconfig,
-                               const _GLFWfbconfig* fbconfig);
-#if defined(_GLFW_X11)
-GLFWbool _glfwChooseVisualEGL(const _GLFWwndconfig* wndconfig,
-                              const _GLFWctxconfig* ctxconfig,
-                              const _GLFWfbconfig* fbconfig,
-                              Visual** visual, int* depth);
-#endif /*_GLFW_X11*/
+GLFWbool _glfwSetFBConfigEGL(_GLFWwindow* window,
+                             const _GLFWctxconfig* ctxconfig,
+                             const _GLFWfbconfig* fbconfig);
 
 GLFWbool _glfwInitOSMesa(void);
 void _glfwTerminateOSMesa(void);
-GLFWbool _glfwCreateContextOSMesa(_GLFWwindow* window,
-                                  const _GLFWctxconfig* ctxconfig,
-                                  const _GLFWfbconfig* fbconfig);
+GLFWbool _glfwSetFBConfigOSMesa(_GLFWwindow* window,
+                                const _GLFWctxconfig* ctxconfig,
+                                const _GLFWfbconfig* fbconfig);
 
 GLFWbool _glfwInitVulkan(int mode);
 void _glfwTerminateVulkan(void);

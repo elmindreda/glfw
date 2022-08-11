@@ -46,7 +46,7 @@
 // exists and whether all relevant options have supported and non-conflicting
 // values
 //
-GLFWbool _glfwIsValidContextConfig(const _GLFWctxconfig* ctxconfig)
+static GLFWbool isValidContextConfig(const _GLFWctxconfig* ctxconfig)
 {
     if (ctxconfig->creationAPI != GLFW_NATIVE_CONTEXT_API &&
         ctxconfig->creationAPI != GLFW_EGL_CONTEXT_API &&
@@ -306,8 +306,8 @@ uint32_t _glfwCompareFBConfigs(const _GLFWfbconfig* desired, const _GLFWfbconfig
 
 // Retrieves the attributes of the current context
 //
-GLFWbool _glfwRefreshContextAttribs(_GLFWwindow* window,
-                                    const _GLFWctxconfig* ctxconfig)
+static GLFWbool refreshContextAttribs(_GLFWwindow* window,
+                                      const _GLFWctxconfig* ctxconfig)
 {
     int i;
     _GLFWwindow* previous;
@@ -542,6 +542,80 @@ GLFWbool _glfwRefreshContextAttribs(_GLFWwindow* window,
     return GLFW_TRUE;
 }
 
+GLFWbool _glfwSetFBConfig(_GLFWwindow* window,
+                          const _GLFWctxconfig* ctxconfig,
+                          const _GLFWfbconfig* fbconfig)
+{
+    if (!isValidContextConfig(ctxconfig))
+        return GLFW_FALSE;
+
+    window->framebufferAPI = ctxconfig->creationAPI;
+    window->doublebuffer = fbconfig->doublebuffer;
+
+    switch (window->framebufferAPI)
+    {
+        case GLFW_NATIVE_CONTEXT_API:
+        {
+            if (!_glfw.platform.initContextCreation())
+                return GLFW_FALSE;
+
+            return _glfw.platform.setFBConfig(window, ctxconfig, fbconfig);
+        }
+
+        case GLFW_EGL_CONTEXT_API:
+        {
+            if (!_glfwInitEGL())
+                return GLFW_FALSE;
+
+            return _glfwSetFBConfigEGL(window, ctxconfig, fbconfig);
+        }
+
+        case GLFW_OSMESA_CONTEXT_API:
+        {
+            if (!_glfwInitOSMesa())
+                return GLFW_FALSE;
+
+            return _glfwSetFBConfigOSMesa(window, ctxconfig, fbconfig);
+        }
+    }
+
+    assert(GLFW_FALSE);
+    return GLFW_FALSE;
+}
+
+GLFWbool _glfwCreateFramebuffer(_GLFWwindow* window, const _GLFWfbconfig* fbconfig)
+{
+    assert(window->createFramebuffer != NULL);
+    return window->createFramebuffer(window, fbconfig);
+}
+
+void _glfwDestroyFramebuffer(_GLFWwindow* window)
+{
+    if (window->destroyFramebuffer)
+        window->destroyFramebuffer(window);
+}
+
+GLFWbool _glfwCreateContext(_GLFWwindow* window, const _GLFWctxconfig* ctxconfig)
+{
+    assert(window->createContext != NULL);
+
+    if (!window->createContext(window, ctxconfig))
+        return GLFW_FALSE;
+
+    return refreshContextAttribs(window, ctxconfig);
+}
+
+void _glfwDestroyContext(_GLFWwindow* window)
+{
+    // The window's context must not be current on another thread when the
+    // window is destroyed
+    if (window == _glfwPlatformGetTls(&_glfw.contextSlot))
+        glfwMakeContextCurrent(NULL);
+
+    if (window->context.destroy)
+        window->context.destroy(window);
+}
+
 // Searches an extension string for the specified extension
 //
 GLFWbool _glfwStringInExtensionString(const char* string, const char* extensions)
@@ -614,7 +688,7 @@ GLFWAPI void glfwSwapBuffers(GLFWwindow* handle)
 
     _GLFW_REQUIRE_INIT();
 
-    if (window->context.clientAPI == GLFW_NO_API)
+    if (window->framebufferAPI == GLFW_NO_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT,
                         "Cannot swap buffers of a window that has no OpenGL or OpenGL ES context");

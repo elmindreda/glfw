@@ -112,12 +112,21 @@ static GLFWglproc getProcAddressNSGL(const char* procname)
     return symbol;
 }
 
+static GLFWbool createFramebufferNSGL(_GLFWwindow* window, const _GLFWfbconfig* fbconfig)
+{
+    window->nsgl.transparent = fbconfig->transparent;
+    [window->ns.view setWantsBestResolutionOpenGLSurface:window->ns.retina];
+}
+
+static void destroyFramebufferNSGL(_GLFWwindow* window)
+{
+    [window->nsgl.pixelFormat release];
+    window->nsgl.pixelFormat = nil;
+}
+
 static void destroyContextNSGL(_GLFWwindow* window)
 {
     @autoreleasepool {
-
-    [window->nsgl.pixelFormat release];
-    window->nsgl.pixelFormat = nil;
 
     [window->context.nsgl.object release];
     window->context.nsgl.object = nil;
@@ -157,9 +166,7 @@ void _glfwTerminateNSGL(void)
 
 // Create the OpenGL context
 //
-GLFWbool _glfwCreateContextNSGL(_GLFWwindow* window,
-                                const _GLFWctxconfig* ctxconfig,
-                                const _GLFWfbconfig* fbconfig)
+static GLFWbool createContextNSGL(_GLFWwindow* window, const _GLFWctxconfig* ctxconfig)
 {
     if (ctxconfig->clientAPI == GLFW_OPENGL_ES_API)
     {
@@ -178,6 +185,43 @@ GLFWbool _glfwCreateContextNSGL(_GLFWwindow* window,
         }
     }
 
+    NSOpenGLContext* share = nil;
+
+    if (ctxconfig->share)
+        share = ctxconfig->share->context.nsgl.object;
+
+    window->context.nsgl.object =
+        [[NSOpenGLContext alloc] initWithFormat:window->nsgl.pixelFormat
+                                   shareContext:share];
+    if (window->context.nsgl.object == nil)
+    {
+        _glfwInputError(GLFW_VERSION_UNAVAILABLE,
+                        "NSGL: Failed to create OpenGL context");
+        return GLFW_FALSE;
+    }
+
+    if (window->nsgl.transparent)
+    {
+        GLint opaque = 0;
+        [window->context.nsgl.object setValues:&opaque
+                                  forParameter:NSOpenGLContextParameterSurfaceOpacity];
+    }
+
+    [window->context.nsgl.object setView:window->ns.view];
+
+    window->context.makeCurrent = makeContextCurrentNSGL;
+    window->context.swapInterval = swapIntervalNSGL;
+    window->context.extensionSupported = extensionSupportedNSGL;
+    window->context.getProcAddress = getProcAddressNSGL;
+    window->context.destroy = destroyContextNSGL;
+
+    return GLFW_TRUE;
+}
+
+GLFWbool _glfwSetFBConfigNSGL(_GLFWwindow* window,
+                              const _GLFWctxconfig* ctxconfig,
+                              const _GLFWfbconfig* fbconfig)
+{
     // Context robustness modes (GL_KHR_robustness) are not yet supported by
     // macOS but are not a hard constraint, so ignore and continue
 
@@ -313,39 +357,10 @@ GLFWbool _glfwCreateContextNSGL(_GLFWwindow* window,
         return GLFW_FALSE;
     }
 
-    NSOpenGLContext* share = nil;
-
-    if (ctxconfig->share)
-        share = ctxconfig->share->context.nsgl.object;
-
-    window->context.nsgl.object =
-        [[NSOpenGLContext alloc] initWithFormat:window->nsgl.pixelFormat
-                                   shareContext:share];
-    if (window->context.nsgl.object == nil)
-    {
-        _glfwInputError(GLFW_VERSION_UNAVAILABLE,
-                        "NSGL: Failed to create OpenGL context");
-        return GLFW_FALSE;
-    }
-
-    if (fbconfig->transparent)
-    {
-        GLint opaque = 0;
-        [window->context.nsgl.object setValues:&opaque
-                                  forParameter:NSOpenGLContextParameterSurfaceOpacity];
-    }
-
-    [window->ns.view setWantsBestResolutionOpenGLSurface:window->ns.retina];
-
-    [window->context.nsgl.object setView:window->ns.view];
-
+    window->createFramebuffer = createFramebufferNSGL;
+    window->destroyFramebuffer = destroyFramebufferNSGL;
+    window->createContext = createContextNSGL;
     window->swapBuffers = swapBuffersNSGL;
-
-    window->context.makeCurrent = makeContextCurrentNSGL;
-    window->context.swapInterval = swapIntervalNSGL;
-    window->context.extensionSupported = extensionSupportedNSGL;
-    window->context.getProcAddress = getProcAddressNSGL;
-    window->context.destroy = destroyContextNSGL;
 
     return GLFW_TRUE;
 }

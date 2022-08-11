@@ -468,6 +468,7 @@ typedef VkBool32 (APIENTRY *PFN_vkGetPhysicalDeviceXcbPresentationSupportKHR)(Vk
 //
 typedef struct _GLFWframebufferGLX
 {
+    GLXFBConfig     config;
     GLXWindow       window;
 } _GLFWframebufferGLX;
 
@@ -999,12 +1000,7 @@ void _glfwCreateInputContextX11(_GLFWwindow* window);
 
 GLFWbool _glfwInitGLX(void);
 void _glfwTerminateGLX(void);
-GLFWbool _glfwCreateContextGLX(_GLFWwindow* window,
-                               const _GLFWctxconfig* ctxconfig,
-                               const _GLFWfbconfig* fbconfig);
-void _glfwDestroyContextGLX(_GLFWwindow* window);
-GLFWbool _glfwChooseVisualGLX(const _GLFWwndconfig* wndconfig,
-                              const _GLFWctxconfig* ctxconfig,
-                              const _GLFWfbconfig* fbconfig,
-                              Visual** visual, int* depth);
+GLFWbool _glfwSetFBConfigGLX(_GLFWwindow* window,
+                             const _GLFWctxconfig* ctxconfig,
+                             const _GLFWfbconfig* fbconfig);
 

@@ -671,6 +671,8 @@ GLFWbool _glfwConnectWin32(int platformID, _GLFWplatform* platform)
         _glfwWaitEventsWin32,
         _glfwWaitEventsTimeoutWin32,
         _glfwPostEmptyEventWin32,
+        _glfwInitWGL,
+        _glfwSetFBConfigWGL,
         _glfwGetEGLPlatformWin32,
         _glfwGetEGLNativeDisplayWin32,
         _glfwGetEGLNativeWindowWin32,

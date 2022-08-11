@@ -123,6 +123,7 @@ typedef UInt8 (*PFN_LMGetKbdType)(void);
 typedef struct _GLFWframebufferNSGL
 {
     id                pixelFormat;
+    GLFWbool          transparent;
 } _GLFWframebufferNSGL;
 
 // NSGL-specific per-context data
@@ -301,8 +302,7 @@ void* _glfwLoadLocalVulkanLoaderCocoa(void);
 
 GLFWbool _glfwInitNSGL(void);
 void _glfwTerminateNSGL(void);
-GLFWbool _glfwCreateContextNSGL(_GLFWwindow* window,
-                                const _GLFWctxconfig* ctxconfig,
-                                const _GLFWfbconfig* fbconfig);
-void _glfwDestroyContextNSGL(_GLFWwindow* window);
+GLFWbool _glfwSetFBConfigNSGL(_GLFWwindow* window,
+                              const _GLFWctxconfig* ctxconfig,
+                              const _GLFWfbconfig* fbconfig);
 

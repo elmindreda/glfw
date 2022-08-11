@@ -80,13 +80,6 @@ static void destroyContextOSMesa(_GLFWwindow* window)
         OSMesaDestroyContext(window->context.osmesa.handle);
         window->context.osmesa.handle = NULL;
     }
-
-    if (window->osmesa.buffer)
-    {
-        _glfw_free(window->osmesa.buffer);
-        window->osmesa.width = 0;
-        window->osmesa.height = 0;
-    }
 }
 
 static void swapBuffersOSMesa(_GLFWwindow* window)
@@ -103,6 +96,21 @@ static int extensionSupportedOSMesa(const char* extension)
 {
     // OSMesa does not have extensions
     return GLFW_FALSE;
+}
+
+static GLFWbool createFramebufferOSMesa(_GLFWwindow* window, const _GLFWfbconfig* fbconfig)
+{
+    return GLFW_TRUE;
+}
+
+static void destroyFramebufferOSMesa(_GLFWwindow* window)
+{
+    if (window->osmesa.buffer)
+    {
+        _glfw_free(window->osmesa.buffer);
+        window->osmesa.width = 0;
+        window->osmesa.height = 0;
+    }
 }
 
 
@@ -194,15 +202,9 @@ void _glfwTerminateOSMesa(void)
     attribs[index++] = v; \
 }
 
-GLFWbool _glfwCreateContextOSMesa(_GLFWwindow* window,
-                                  const _GLFWctxconfig* ctxconfig,
-                                  const _GLFWfbconfig* fbconfig)
+static GLFWbool createContextOSMesa(_GLFWwindow* window, const _GLFWctxconfig* ctxconfig)
 {
     OSMesaContext share = NULL;
-    const int accumBits = fbconfig->accumRedBits +
-                          fbconfig->accumGreenBits +
-                          fbconfig->accumBlueBits +
-                          fbconfig->accumAlphaBits;
 
     if (ctxconfig->clientAPI == GLFW_OPENGL_ES_API)
     {
@@ -219,9 +221,9 @@ GLFWbool _glfwCreateContextOSMesa(_GLFWwindow* window,
         int index = 0, attribs[40];
 
         SET_ATTRIB(OSMESA_FORMAT, OSMESA_RGBA);
-        SET_ATTRIB(OSMESA_DEPTH_BITS, fbconfig->depthBits);
-        SET_ATTRIB(OSMESA_STENCIL_BITS, fbconfig->stencilBits);
-        SET_ATTRIB(OSMESA_ACCUM_BITS, accumBits);
+        SET_ATTRIB(OSMESA_DEPTH_BITS, window->osmesa.depthBits);
+        SET_ATTRIB(OSMESA_STENCIL_BITS, window->osmesa.stencilBits);
+        SET_ATTRIB(OSMESA_ACCUM_BITS, window->osmesa.accumBits);
 
         if (ctxconfig->profile == GLFW_OPENGL_CORE_PROFILE)
         {
@@ -261,9 +263,9 @@ GLFWbool _glfwCreateContextOSMesa(_GLFWwindow* window,
 
         window->context.osmesa.handle =
             OSMesaCreateContextExt(OSMESA_RGBA,
-                                   fbconfig->depthBits,
-                                   fbconfig->stencilBits,
-                                   accumBits,
+                                   window->osmesa.depthBits,
+                                   window->osmesa.stencilBits,
+                                   window->osmesa.accumBits,
                                    share);
     }
 
@@ -273,8 +275,6 @@ GLFWbool _glfwCreateContextOSMesa(_GLFWwindow* window,
                         "OSMesa: Failed to create context");
         return GLFW_FALSE;
     }
-
-    window->swapBuffers = swapBuffersOSMesa;
 
     window->context.makeCurrent = makeContextCurrentOSMesa;
     window->context.swapInterval = swapIntervalOSMesa;
@@ -286,6 +286,25 @@ GLFWbool _glfwCreateContextOSMesa(_GLFWwindow* window,
 }
 
 #undef SET_ATTRIB
+
+GLFWbool _glfwSetFBConfigOSMesa(_GLFWwindow* window,
+                                const _GLFWctxconfig* ctxconfig,
+                                const _GLFWfbconfig* fbconfig)
+{
+    window->osmesa.depthBits = fbconfig->depthBits;
+    window->osmesa.stencilBits = fbconfig->stencilBits;
+    window->osmesa.accumBits = fbconfig->accumRedBits +
+                               fbconfig->accumGreenBits +
+                               fbconfig->accumBlueBits +
+                               fbconfig->accumAlphaBits;
+
+    window->createFramebuffer = createFramebufferOSMesa;
+    window->destroyFramebuffer = destroyFramebufferOSMesa;
+    window->createContext = createContextOSMesa;
+    window->swapBuffers = swapBuffersOSMesa;
+
+    return GLFW_TRUE;
+}
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -300,7 +319,7 @@ GLFWAPI int glfwGetOSMesaColorBuffer(GLFWwindow* handle, int* width,
 
     _GLFW_REQUIRE_INIT_OR_RETURN(GLFW_FALSE);
 
-    if (window->context.creationAPI != GLFW_OSMESA_CONTEXT_API)
+    if (window->framebufferAPI != GLFW_OSMESA_CONTEXT_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
         return GLFW_FALSE;

@@ -107,6 +107,8 @@ GLFWbool _glfwConnectNull(int platformID, _GLFWplatform* platform)
         _glfwWaitEventsNull,
         _glfwWaitEventsTimeoutNull,
         _glfwPostEmptyEventNull,
+        _glfwInitOSMesa,
+        _glfwSetFBConfigOSMesa,
         _glfwGetEGLPlatformNull,
         _glfwGetEGLNativeDisplayNull,
         _glfwGetEGLNativeWindowNull,

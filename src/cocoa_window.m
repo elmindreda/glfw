@@ -920,39 +920,28 @@ GLFWbool _glfwCreateWindowCocoa(_GLFWwindow* window,
 {
     @autoreleasepool {
 
+    if (ctxconfig->clientAPI != GLFW_NO_API)
+    {
+        if (!_glfwSetFBConfig(window, ctxconfig, fbconfig))
+            return GLFW_FALSE;
+    }
+
     if (!createNativeWindow(window, wndconfig, fbconfig))
         return GLFW_FALSE;
 
     if (ctxconfig->clientAPI != GLFW_NO_API)
     {
-        if (ctxconfig->creationAPI == GLFW_NATIVE_CONTEXT_API)
-        {
-            if (!_glfwInitNSGL())
-                return GLFW_FALSE;
-            if (!_glfwCreateContextNSGL(window, ctxconfig, fbconfig))
-                return GLFW_FALSE;
-        }
-        else if (ctxconfig->creationAPI == GLFW_EGL_CONTEXT_API)
+        if (ctxconfig->creationAPI == GLFW_EGL_CONTEXT_API)
         {
             // EGL implementation on macOS use CALayer* EGLNativeWindowType so we
             // need to get the layer for EGL window surface creation.
             [window->ns.view setWantsLayer:YES];
             window->ns.layer = [window->ns.view layer];
-
-            if (!_glfwInitEGL())
-                return GLFW_FALSE;
-            if (!_glfwCreateContextEGL(window, ctxconfig, fbconfig))
-                return GLFW_FALSE;
-        }
-        else if (ctxconfig->creationAPI == GLFW_OSMESA_CONTEXT_API)
-        {
-            if (!_glfwInitOSMesa())
-                return GLFW_FALSE;
-            if (!_glfwCreateContextOSMesa(window, ctxconfig, fbconfig))
-                return GLFW_FALSE;
         }
 
-        if (!_glfwRefreshContextAttribs(window, ctxconfig))
+        if (!_glfwCreateFramebuffer(window, fbconfig))
+            return GLFW_FALSE;
+        if (!_glfwCreateContext(window, ctxconfig))
             return GLFW_FALSE;
     }
 
@@ -995,8 +984,8 @@ void _glfwDestroyWindowCocoa(_GLFWwindow* window)
     if (window->monitor)
         releaseMonitor(window);
 
-    if (window->context.destroy)
-        window->context.destroy(window);
+    _glfwDestroyContext(window);
+    _glfwDestroyFramebuffer(window);
 
     [window->ns.object setDelegate:nil];
     [window->ns.delegate release];

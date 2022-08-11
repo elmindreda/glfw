@@ -2016,6 +2016,12 @@ GLFWbool _glfwCreateWindowWayland(_GLFWwindow* window,
                                   const _GLFWctxconfig* ctxconfig,
                                   const _GLFWfbconfig* fbconfig)
 {
+    if (ctxconfig->clientAPI != GLFW_NO_API)
+    {
+        if (!_glfwSetFBConfig(window, ctxconfig, fbconfig))
+            return GLFW_FALSE;
+    }
+
     if (!createNativeSurface(window, wndconfig, fbconfig))
         return GLFW_FALSE;
 
@@ -2033,21 +2039,11 @@ GLFWbool _glfwCreateWindowWayland(_GLFWwindow* window,
                                 "Wayland: Failed to create EGL window");
                 return GLFW_FALSE;
             }
-
-            if (!_glfwInitEGL())
-                return GLFW_FALSE;
-            if (!_glfwCreateContextEGL(window, ctxconfig, fbconfig))
-                return GLFW_FALSE;
-        }
-        else if (ctxconfig->creationAPI == GLFW_OSMESA_CONTEXT_API)
-        {
-            if (!_glfwInitOSMesa())
-                return GLFW_FALSE;
-            if (!_glfwCreateContextOSMesa(window, ctxconfig, fbconfig))
-                return GLFW_FALSE;
         }
 
-        if (!_glfwRefreshContextAttribs(window, ctxconfig))
+        if (!_glfwCreateFramebuffer(window, fbconfig))
+            return GLFW_FALSE;
+        if (!_glfwCreateContext(window, ctxconfig))
             return GLFW_FALSE;
     }
 
@@ -2083,8 +2079,8 @@ void _glfwDestroyWindowWayland(_GLFWwindow* window)
     if (window->wl.confinedPointer)
         zwp_confined_pointer_v1_destroy(window->wl.confinedPointer);
 
-    if (window->context.destroy)
-        window->context.destroy(window);
+    _glfwDestroyContext(window);
+    _glfwDestroyFramebuffer(window);
 
     destroyShellObjects(window);
 

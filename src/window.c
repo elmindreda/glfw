@@ -213,9 +213,6 @@ GLFWAPI GLFWwindow* glfwCreateWindow(int width, int height,
     wndconfig.title   = title;
     ctxconfig.share   = (_GLFWwindow*) share;
 
-    if (!_glfwIsValidContextConfig(&ctxconfig))
-        return NULL;
-
     window = _glfw_calloc(1, sizeof(_GLFWwindow));
     window->next = _glfw.windowListHead;
     _glfw.windowListHead = window;
@@ -235,8 +232,6 @@ GLFWAPI GLFWwindow* glfwCreateWindow(int width, int height,
     window->focusOnShow      = wndconfig.focusOnShow;
     window->mousePassthrough = wndconfig.mousePassthrough;
     window->cursorMode       = GLFW_CURSOR_NORMAL;
-
-    window->doublebuffer = fbconfig.doublebuffer;
 
     window->minwidth    = GLFW_DONT_CARE;
     window->minheight   = GLFW_DONT_CARE;
@@ -476,11 +471,6 @@ GLFWAPI void glfwDestroyWindow(GLFWwindow* handle)
 
     // Clear all callbacks to avoid exposing a half torn-down window object
     memset(&window->callbacks, 0, sizeof(window->callbacks));
-
-    // The window's context must not be current on another thread when the
-    // window is destroyed
-    if (window == _glfwPlatformGetTls(&_glfw.contextSlot))
-        glfwMakeContextCurrent(NULL);
 
     _glfw.platform.destroyWindow(window);
 

@@ -564,10 +564,61 @@ static void inputContextDestroyCallback(XIC ic, XPointer clientData, XPointer ca
 
 // Create the X11 window (and its colormap)
 //
-static GLFWbool createNativeWindow(_GLFWwindow* window,
-                                   const _GLFWwndconfig* wndconfig,
-                                   Visual* visual, int depth)
+static GLFWbool createNativeWindow(_GLFWwindow* window, const _GLFWwndconfig* wndconfig)
 {
+    Visual* visual = NULL;
+    int depth;
+
+    if (window->framebufferAPI == GLFW_NATIVE_CONTEXT_API)
+    {
+        XVisualInfo* result;
+
+        result = glXGetVisualFromFBConfig(_glfw.x11.display, window->glx.config);
+        if (!result)
+        {
+            _glfwInputError(GLFW_PLATFORM_ERROR,
+                            "GLX: Failed to retrieve Visual for GLXFBConfig");
+            return GLFW_FALSE;
+        }
+
+        visual = result->visual;
+        depth  = result->depth;
+
+        XFree(result);
+    }
+    else if (window->framebufferAPI == GLFW_EGL_CONTEXT_API)
+    {
+        XVisualInfo* result;
+        XVisualInfo desired;
+        EGLint visualID = 0, count = 0;
+        const long vimask = VisualScreenMask | VisualIDMask;
+
+        eglGetConfigAttrib(_glfw.egl.display, window->egl.config,
+                           EGL_NATIVE_VISUAL_ID, &visualID);
+
+        desired.screen = _glfw.x11.screen;
+        desired.visualid = visualID;
+
+        result = XGetVisualInfo(_glfw.x11.display, vimask, &desired, &count);
+        if (!result)
+        {
+            _glfwInputError(GLFW_PLATFORM_ERROR,
+                            "EGL: Failed to retrieve Visual for EGLConfig");
+            return GLFW_FALSE;
+        }
+
+        visual = result->visual;
+        depth = result->depth;
+
+        XFree(result);
+    }
+
+    if (!visual)
+    {
+        visual = DefaultVisual(_glfw.x11.display, _glfw.x11.screen);
+        depth = DefaultDepth(_glfw.x11.display, _glfw.x11.screen);
+    }
+
     int width = wndconfig->width;
     int height = wndconfig->height;
 
@@ -1961,60 +2012,20 @@ GLFWbool _glfwCreateWindowX11(_GLFWwindow* window,
                               const _GLFWctxconfig* ctxconfig,
                               const _GLFWfbconfig* fbconfig)
 {
-    Visual* visual = NULL;
-    int depth;
-
     if (ctxconfig->clientAPI != GLFW_NO_API)
     {
-        if (ctxconfig->creationAPI == GLFW_NATIVE_CONTEXT_API)
-        {
-            if (!_glfwInitGLX())
-                return GLFW_FALSE;
-            if (!_glfwChooseVisualGLX(wndconfig, ctxconfig, fbconfig, &visual, &depth))
-                return GLFW_FALSE;
-        }
-        else if (ctxconfig->creationAPI == GLFW_EGL_CONTEXT_API)
-        {
-            if (!_glfwInitEGL())
-                return GLFW_FALSE;
-            if (!_glfwChooseVisualEGL(wndconfig, ctxconfig, fbconfig, &visual, &depth))
-                return GLFW_FALSE;
-        }
-        else if (ctxconfig->creationAPI == GLFW_OSMESA_CONTEXT_API)
-        {
-            if (!_glfwInitOSMesa())
-                return GLFW_FALSE;
-        }
+        if (!_glfwSetFBConfig(window, ctxconfig, fbconfig))
+            return GLFW_FALSE;
     }
 
-    if (!visual)
-    {
-        visual = DefaultVisual(_glfw.x11.display, _glfw.x11.screen);
-        depth = DefaultDepth(_glfw.x11.display, _glfw.x11.screen);
-    }
-
-    if (!createNativeWindow(window, wndconfig, visual, depth))
+    if (!createNativeWindow(window, wndconfig))
         return GLFW_FALSE;
 
     if (ctxconfig->clientAPI != GLFW_NO_API)
     {
-        if (ctxconfig->creationAPI == GLFW_NATIVE_CONTEXT_API)
-        {
-            if (!_glfwCreateContextGLX(window, ctxconfig, fbconfig))
-                return GLFW_FALSE;
-        }
-        else if (ctxconfig->creationAPI == GLFW_EGL_CONTEXT_API)
-        {
-            if (!_glfwCreateContextEGL(window, ctxconfig, fbconfig))
-                return GLFW_FALSE;
-        }
-        else if (ctxconfig->creationAPI == GLFW_OSMESA_CONTEXT_API)
-        {
-            if (!_glfwCreateContextOSMesa(window, ctxconfig, fbconfig))
-                return GLFW_FALSE;
-        }
-
-        if (!_glfwRefreshContextAttribs(window, ctxconfig))
+        if (!_glfwCreateFramebuffer(window, fbconfig))
+            return GLFW_FALSE;
+        if (!_glfwCreateContext(window, ctxconfig))
             return GLFW_FALSE;
     }
 
@@ -2058,8 +2069,8 @@ void _glfwDestroyWindowX11(_GLFWwindow* window)
         window->x11.ic = NULL;
     }
 
-    if (window->context.destroy)
-        window->context.destroy(window);
+    _glfwDestroyContext(window);
+    _glfwDestroyFramebuffer(window);
 
     if (window->x11.handle)
     {

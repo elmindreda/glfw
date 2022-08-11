@@ -372,6 +372,7 @@ typedef VkBool32 (APIENTRY *PFN_vkGetPhysicalDeviceWin32PresentationSupportKHR)(
 typedef struct _GLFWframebufferWGL
 {
     HDC       dc;
+    int       pixelFormat;
     int       interval;
 } _GLFWframebufferWGL;
 
@@ -624,7 +625,7 @@ void _glfwUpdateGamepadGUIDWin32(char* guid);
 
 GLFWbool _glfwInitWGL(void);
 void _glfwTerminateWGL(void);
-GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
-                               const _GLFWctxconfig* ctxconfig,
-                               const _GLFWfbconfig* fbconfig);
+GLFWbool _glfwSetFBConfigWGL(_GLFWwindow* window,
+                             const _GLFWctxconfig* ctxconfig,
+                             const _GLFWfbconfig* fbconfig);
 

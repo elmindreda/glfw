@@ -117,28 +117,20 @@ GLFWbool _glfwCreateWindowNull(_GLFWwindow* window,
                                const _GLFWctxconfig* ctxconfig,
                                const _GLFWfbconfig* fbconfig)
 {
+    if (ctxconfig->clientAPI != GLFW_NO_API)
+    {
+        if (!_glfwSetFBConfig(window, ctxconfig, fbconfig))
+            return GLFW_FALSE;
+    }
+
     if (!createNativeWindow(window, wndconfig, fbconfig))
         return GLFW_FALSE;
 
     if (ctxconfig->clientAPI != GLFW_NO_API)
     {
-        if (ctxconfig->creationAPI == GLFW_NATIVE_CONTEXT_API ||
-            ctxconfig->creationAPI == GLFW_OSMESA_CONTEXT_API)
-        {
-            if (!_glfwInitOSMesa())
-                return GLFW_FALSE;
-            if (!_glfwCreateContextOSMesa(window, ctxconfig, fbconfig))
-                return GLFW_FALSE;
-        }
-        else if (ctxconfig->creationAPI == GLFW_EGL_CONTEXT_API)
-        {
-            if (!_glfwInitEGL())
-                return GLFW_FALSE;
-            if (!_glfwCreateContextEGL(window, ctxconfig, fbconfig))
-                return GLFW_FALSE;
-        }
-
-        if (!_glfwRefreshContextAttribs(window, ctxconfig))
+        if (!_glfwCreateFramebuffer(window, fbconfig))
+            return GLFW_FALSE;
+        if (!_glfwCreateContext(window, ctxconfig))
             return GLFW_FALSE;
     }
 
@@ -175,8 +167,8 @@ void _glfwDestroyWindowNull(_GLFWwindow* window)
     if (_glfw.null.focusedWindow == window)
         _glfw.null.focusedWindow = NULL;
 
-    if (window->context.destroy)
-        window->context.destroy(window);
+    _glfwDestroyContext(window);
+    _glfwDestroyFramebuffer(window);
 }
 
 void _glfwSetWindowTitleNull(_GLFWwindow* window, const char* title)
