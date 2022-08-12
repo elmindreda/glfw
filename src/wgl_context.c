@@ -54,225 +54,6 @@ static int findPixelFormatAttribValueWGL(const int* attribs,
     return 0;
 }
 
-#define ADD_ATTRIB(a) \
-{ \
-    assert((size_t) attribCount < sizeof(attribs) / sizeof(attribs[0])); \
-    attribs[attribCount++] = a; \
-}
-#define FIND_ATTRIB_VALUE(a) \
-    findPixelFormatAttribValueWGL(attribs, attribCount, values, a)
-
-// Return a list of available and usable framebuffer configs
-//
-static int choosePixelFormatWGL(_GLFWwindow* window,
-                                const _GLFWctxconfig* ctxconfig,
-                                const _GLFWfbconfig* fbconfig)
-{
-    uint32_t closestConfigDiff = UINT32_MAX;
-    int i, formatCount, closestPixelFormat = 0, attribCount = 0;
-    int attribs[40];
-    int values[sizeof(attribs) / sizeof(attribs[0])];
-    GLFWbool accelerationAvailable = GLFW_FALSE;
-
-    formatCount = DescribePixelFormat(GetDC(_glfw.win32.helperWindowHandle),
-                                      1,
-                                      sizeof(PIXELFORMATDESCRIPTOR),
-                                      NULL);
-
-    if (_glfw.wgl.ARB_pixel_format)
-    {
-        ADD_ATTRIB(WGL_SUPPORT_OPENGL_ARB);
-        ADD_ATTRIB(WGL_DRAW_TO_WINDOW_ARB);
-        ADD_ATTRIB(WGL_PIXEL_TYPE_ARB);
-        ADD_ATTRIB(WGL_ACCELERATION_ARB);
-        ADD_ATTRIB(WGL_RED_BITS_ARB);
-        ADD_ATTRIB(WGL_RED_SHIFT_ARB);
-        ADD_ATTRIB(WGL_GREEN_BITS_ARB);
-        ADD_ATTRIB(WGL_GREEN_SHIFT_ARB);
-        ADD_ATTRIB(WGL_BLUE_BITS_ARB);
-        ADD_ATTRIB(WGL_BLUE_SHIFT_ARB);
-        ADD_ATTRIB(WGL_ALPHA_BITS_ARB);
-        ADD_ATTRIB(WGL_ALPHA_SHIFT_ARB);
-        ADD_ATTRIB(WGL_DEPTH_BITS_ARB);
-        ADD_ATTRIB(WGL_STENCIL_BITS_ARB);
-        ADD_ATTRIB(WGL_ACCUM_BITS_ARB);
-        ADD_ATTRIB(WGL_ACCUM_RED_BITS_ARB);
-        ADD_ATTRIB(WGL_ACCUM_GREEN_BITS_ARB);
-        ADD_ATTRIB(WGL_ACCUM_BLUE_BITS_ARB);
-        ADD_ATTRIB(WGL_ACCUM_ALPHA_BITS_ARB);
-        ADD_ATTRIB(WGL_AUX_BUFFERS_ARB);
-        ADD_ATTRIB(WGL_STEREO_ARB);
-        ADD_ATTRIB(WGL_DOUBLE_BUFFER_ARB);
-
-        if (_glfw.wgl.ARB_multisample)
-            ADD_ATTRIB(WGL_SAMPLES_ARB);
-
-        if (ctxconfig->clientAPI == GLFW_OPENGL_API)
-        {
-            if (_glfw.wgl.ARB_framebuffer_sRGB || _glfw.wgl.EXT_framebuffer_sRGB)
-                ADD_ATTRIB(WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB);
-        }
-        else
-        {
-            if (_glfw.wgl.EXT_colorspace)
-                ADD_ATTRIB(WGL_COLORSPACE_EXT);
-        }
-    }
-
-    for (i = 0;  i < formatCount;  i++)
-    {
-        _GLFWfbconfig current = {0};
-        const int pixelFormat = i + 1;
-        uint32_t configDiff;
-
-        if (_glfw.wgl.ARB_pixel_format)
-        {
-            // Get pixel format attributes through "modern" extension
-
-            if (!wglGetPixelFormatAttribivARB(GetDC(_glfw.win32.helperWindowHandle),
-                                              pixelFormat, 0,
-                                              attribCount,
-                                              attribs, values))
-            {
-                _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
-                                     "WGL: Failed to retrieve pixel format attributes");
-                return 0;
-            }
-
-            if (!FIND_ATTRIB_VALUE(WGL_SUPPORT_OPENGL_ARB) ||
-                !FIND_ATTRIB_VALUE(WGL_DRAW_TO_WINDOW_ARB))
-            {
-                continue;
-            }
-
-            if (FIND_ATTRIB_VALUE(WGL_PIXEL_TYPE_ARB) != WGL_TYPE_RGBA_ARB)
-                continue;
-
-            if (FIND_ATTRIB_VALUE(WGL_ACCELERATION_ARB) == WGL_NO_ACCELERATION_ARB)
-                continue;
-
-            accelerationAvailable = GLFW_TRUE;
-
-            current.redBits = FIND_ATTRIB_VALUE(WGL_RED_BITS_ARB);
-            current.greenBits = FIND_ATTRIB_VALUE(WGL_GREEN_BITS_ARB);
-            current.blueBits = FIND_ATTRIB_VALUE(WGL_BLUE_BITS_ARB);
-            current.alphaBits = FIND_ATTRIB_VALUE(WGL_ALPHA_BITS_ARB);
-
-            current.depthBits = FIND_ATTRIB_VALUE(WGL_DEPTH_BITS_ARB);
-            current.stencilBits = FIND_ATTRIB_VALUE(WGL_STENCIL_BITS_ARB);
-
-            current.accumRedBits = FIND_ATTRIB_VALUE(WGL_ACCUM_RED_BITS_ARB);
-            current.accumGreenBits = FIND_ATTRIB_VALUE(WGL_ACCUM_GREEN_BITS_ARB);
-            current.accumBlueBits = FIND_ATTRIB_VALUE(WGL_ACCUM_BLUE_BITS_ARB);
-            current.accumAlphaBits = FIND_ATTRIB_VALUE(WGL_ACCUM_ALPHA_BITS_ARB);
-
-            current.auxBuffers = FIND_ATTRIB_VALUE(WGL_AUX_BUFFERS_ARB);
-            current.doublebuffer = FIND_ATTRIB_VALUE(WGL_DOUBLE_BUFFER_ARB);
-            current.stereo = FIND_ATTRIB_VALUE(WGL_STEREO_ARB);
-
-            if (_glfw.wgl.ARB_multisample)
-                current.samples = FIND_ATTRIB_VALUE(WGL_SAMPLES_ARB);
-
-            if (ctxconfig->clientAPI == GLFW_OPENGL_API)
-            {
-                if (_glfw.wgl.ARB_framebuffer_sRGB ||
-                    _glfw.wgl.EXT_framebuffer_sRGB)
-                {
-                    if (FIND_ATTRIB_VALUE(WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB))
-                        current.sRGB = GLFW_TRUE;
-                }
-            }
-            else
-            {
-                if (_glfw.wgl.EXT_colorspace)
-                {
-                    if (FIND_ATTRIB_VALUE(WGL_COLORSPACE_EXT) == WGL_COLORSPACE_SRGB_EXT)
-                        current.sRGB = GLFW_TRUE;
-                }
-            }
-        }
-        else
-        {
-            // Get pixel format attributes through legacy PFDs
-
-            PIXELFORMATDESCRIPTOR pfd;
-
-            if (!DescribePixelFormat(GetDC(_glfw.win32.helperWindowHandle),
-                                     pixelFormat,
-                                     sizeof(PIXELFORMATDESCRIPTOR),
-                                     &pfd))
-            {
-                _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
-                                    "WGL: Failed to describe pixel format");
-                return 0;
-            }
-
-            if (!(pfd.dwFlags & PFD_DRAW_TO_WINDOW) ||
-                !(pfd.dwFlags & PFD_SUPPORT_OPENGL))
-            {
-                continue;
-            }
-
-            if (pfd.iPixelType != PFD_TYPE_RGBA)
-                continue;
-
-            if (!(pfd.dwFlags & PFD_GENERIC_ACCELERATED) &&
-                (pfd.dwFlags & PFD_GENERIC_FORMAT))
-            {
-                continue;
-            }
-
-            accelerationAvailable = GLFW_TRUE;
-
-            current.redBits = pfd.cRedBits;
-            current.greenBits = pfd.cGreenBits;
-            current.blueBits = pfd.cBlueBits;
-            current.alphaBits = pfd.cAlphaBits;
-
-            current.depthBits = pfd.cDepthBits;
-            current.stencilBits = pfd.cStencilBits;
-
-            current.accumRedBits = pfd.cAccumRedBits;
-            current.accumGreenBits = pfd.cAccumGreenBits;
-            current.accumBlueBits = pfd.cAccumBlueBits;
-            current.accumAlphaBits = pfd.cAccumAlphaBits;
-
-            current.auxBuffers = pfd.cAuxBuffers;
-
-            if (pfd.dwFlags & PFD_DOUBLEBUFFER)
-                current.doublebuffer = GLFW_TRUE;
-            if (pfd.dwFlags & PFD_STEREO)
-                current.stereo = GLFW_TRUE;
-        }
-
-        configDiff = _glfwCompareFBConfigs(fbconfig, &current);
-        if (configDiff < closestConfigDiff)
-        {
-            closestPixelFormat = pixelFormat;
-            closestConfigDiff = configDiff;
-        }
-    }
-
-    if (!accelerationAvailable)
-    {
-        _glfwInputError(GLFW_API_UNAVAILABLE,
-                        "WGL: The driver does not appear to support OpenGL");
-        return 0;
-    }
-
-    if (!closestPixelFormat)
-    {
-        _glfwInputError(GLFW_FORMAT_UNAVAILABLE,
-                        "WGL: Failed to find a suitable pixel format");
-        return 0;
-    }
-
-    return closestPixelFormat;
-}
-
-#undef ADD_ATTRIB
-#undef FIND_ATTRIB_VALUE
-
 static void makeContextCurrentWGL(_GLFWwindow* window)
 {
     if (window)
@@ -748,11 +529,218 @@ static GLFWbool createContextWGL(_GLFWwindow* window, const _GLFWctxconfig* ctxc
 
 #undef SET_ATTRIB
 
+#define ADD_ATTRIB(a) \
+{ \
+    assert((size_t) attribCount < sizeof(attribs) / sizeof(attribs[0])); \
+    attribs[attribCount++] = a; \
+}
+#define FIND_ATTRIB_VALUE(a) \
+    findPixelFormatAttribValueWGL(attribs, attribCount, values, a)
+
 GLFWbool _glfwSetFBConfigWGL(_GLFWwindow* window,
                              const _GLFWctxconfig* ctxconfig,
                              const _GLFWfbconfig* fbconfig)
 {
-    window->wgl.pixelFormat = choosePixelFormatWGL(window, ctxconfig, fbconfig);
+    uint32_t closestConfigDiff = UINT32_MAX;
+    int i, formatCount, closestPixelFormat = 0, attribCount = 0;
+    int attribs[40];
+    int values[sizeof(attribs) / sizeof(attribs[0])];
+    GLFWbool accelerationAvailable = GLFW_FALSE;
+
+    formatCount = DescribePixelFormat(GetDC(_glfw.win32.helperWindowHandle),
+                                      1,
+                                      sizeof(PIXELFORMATDESCRIPTOR),
+                                      NULL);
+
+    if (_glfw.wgl.ARB_pixel_format)
+    {
+        ADD_ATTRIB(WGL_SUPPORT_OPENGL_ARB);
+        ADD_ATTRIB(WGL_DRAW_TO_WINDOW_ARB);
+        ADD_ATTRIB(WGL_PIXEL_TYPE_ARB);
+        ADD_ATTRIB(WGL_ACCELERATION_ARB);
+        ADD_ATTRIB(WGL_RED_BITS_ARB);
+        ADD_ATTRIB(WGL_RED_SHIFT_ARB);
+        ADD_ATTRIB(WGL_GREEN_BITS_ARB);
+        ADD_ATTRIB(WGL_GREEN_SHIFT_ARB);
+        ADD_ATTRIB(WGL_BLUE_BITS_ARB);
+        ADD_ATTRIB(WGL_BLUE_SHIFT_ARB);
+        ADD_ATTRIB(WGL_ALPHA_BITS_ARB);
+        ADD_ATTRIB(WGL_ALPHA_SHIFT_ARB);
+        ADD_ATTRIB(WGL_DEPTH_BITS_ARB);
+        ADD_ATTRIB(WGL_STENCIL_BITS_ARB);
+        ADD_ATTRIB(WGL_ACCUM_BITS_ARB);
+        ADD_ATTRIB(WGL_ACCUM_RED_BITS_ARB);
+        ADD_ATTRIB(WGL_ACCUM_GREEN_BITS_ARB);
+        ADD_ATTRIB(WGL_ACCUM_BLUE_BITS_ARB);
+        ADD_ATTRIB(WGL_ACCUM_ALPHA_BITS_ARB);
+        ADD_ATTRIB(WGL_AUX_BUFFERS_ARB);
+        ADD_ATTRIB(WGL_STEREO_ARB);
+        ADD_ATTRIB(WGL_DOUBLE_BUFFER_ARB);
+
+        if (_glfw.wgl.ARB_multisample)
+            ADD_ATTRIB(WGL_SAMPLES_ARB);
+
+        if (ctxconfig->clientAPI == GLFW_OPENGL_API)
+        {
+            if (_glfw.wgl.ARB_framebuffer_sRGB || _glfw.wgl.EXT_framebuffer_sRGB)
+                ADD_ATTRIB(WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB);
+        }
+        else
+        {
+            if (_glfw.wgl.EXT_colorspace)
+                ADD_ATTRIB(WGL_COLORSPACE_EXT);
+        }
+    }
+
+    for (i = 0;  i < formatCount;  i++)
+    {
+        _GLFWfbconfig current = {0};
+        const int pixelFormat = i + 1;
+        uint32_t configDiff;
+
+        if (_glfw.wgl.ARB_pixel_format)
+        {
+            // Get pixel format attributes through "modern" extension
+
+            if (!wglGetPixelFormatAttribivARB(GetDC(_glfw.win32.helperWindowHandle),
+                                              pixelFormat, 0,
+                                              attribCount,
+                                              attribs, values))
+            {
+                _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
+                                     "WGL: Failed to retrieve pixel format attributes");
+                return GLFW_FALSE;
+            }
+
+            if (!FIND_ATTRIB_VALUE(WGL_SUPPORT_OPENGL_ARB) ||
+                !FIND_ATTRIB_VALUE(WGL_DRAW_TO_WINDOW_ARB))
+            {
+                continue;
+            }
+
+            if (FIND_ATTRIB_VALUE(WGL_PIXEL_TYPE_ARB) != WGL_TYPE_RGBA_ARB)
+                continue;
+
+            if (FIND_ATTRIB_VALUE(WGL_ACCELERATION_ARB) == WGL_NO_ACCELERATION_ARB)
+                continue;
+
+            accelerationAvailable = GLFW_TRUE;
+
+            current.redBits = FIND_ATTRIB_VALUE(WGL_RED_BITS_ARB);
+            current.greenBits = FIND_ATTRIB_VALUE(WGL_GREEN_BITS_ARB);
+            current.blueBits = FIND_ATTRIB_VALUE(WGL_BLUE_BITS_ARB);
+            current.alphaBits = FIND_ATTRIB_VALUE(WGL_ALPHA_BITS_ARB);
+
+            current.depthBits = FIND_ATTRIB_VALUE(WGL_DEPTH_BITS_ARB);
+            current.stencilBits = FIND_ATTRIB_VALUE(WGL_STENCIL_BITS_ARB);
+
+            current.accumRedBits = FIND_ATTRIB_VALUE(WGL_ACCUM_RED_BITS_ARB);
+            current.accumGreenBits = FIND_ATTRIB_VALUE(WGL_ACCUM_GREEN_BITS_ARB);
+            current.accumBlueBits = FIND_ATTRIB_VALUE(WGL_ACCUM_BLUE_BITS_ARB);
+            current.accumAlphaBits = FIND_ATTRIB_VALUE(WGL_ACCUM_ALPHA_BITS_ARB);
+
+            current.auxBuffers = FIND_ATTRIB_VALUE(WGL_AUX_BUFFERS_ARB);
+            current.doublebuffer = FIND_ATTRIB_VALUE(WGL_DOUBLE_BUFFER_ARB);
+            current.stereo = FIND_ATTRIB_VALUE(WGL_STEREO_ARB);
+
+            if (_glfw.wgl.ARB_multisample)
+                current.samples = FIND_ATTRIB_VALUE(WGL_SAMPLES_ARB);
+
+            if (ctxconfig->clientAPI == GLFW_OPENGL_API)
+            {
+                if (_glfw.wgl.ARB_framebuffer_sRGB ||
+                    _glfw.wgl.EXT_framebuffer_sRGB)
+                {
+                    if (FIND_ATTRIB_VALUE(WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB))
+                        current.sRGB = GLFW_TRUE;
+                }
+            }
+            else
+            {
+                if (_glfw.wgl.EXT_colorspace)
+                {
+                    if (FIND_ATTRIB_VALUE(WGL_COLORSPACE_EXT) == WGL_COLORSPACE_SRGB_EXT)
+                        current.sRGB = GLFW_TRUE;
+                }
+            }
+        }
+        else
+        {
+            // Get pixel format attributes through legacy PFDs
+
+            PIXELFORMATDESCRIPTOR pfd;
+
+            if (!DescribePixelFormat(GetDC(_glfw.win32.helperWindowHandle),
+                                     pixelFormat,
+                                     sizeof(PIXELFORMATDESCRIPTOR),
+                                     &pfd))
+            {
+                _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
+                                    "WGL: Failed to describe pixel format");
+                return GLFW_FALSE;
+            }
+
+            if (!(pfd.dwFlags & PFD_DRAW_TO_WINDOW) ||
+                !(pfd.dwFlags & PFD_SUPPORT_OPENGL))
+            {
+                continue;
+            }
+
+            if (pfd.iPixelType != PFD_TYPE_RGBA)
+                continue;
+
+            if (!(pfd.dwFlags & PFD_GENERIC_ACCELERATED) &&
+                (pfd.dwFlags & PFD_GENERIC_FORMAT))
+            {
+                continue;
+            }
+
+            accelerationAvailable = GLFW_TRUE;
+
+            current.redBits = pfd.cRedBits;
+            current.greenBits = pfd.cGreenBits;
+            current.blueBits = pfd.cBlueBits;
+            current.alphaBits = pfd.cAlphaBits;
+
+            current.depthBits = pfd.cDepthBits;
+            current.stencilBits = pfd.cStencilBits;
+
+            current.accumRedBits = pfd.cAccumRedBits;
+            current.accumGreenBits = pfd.cAccumGreenBits;
+            current.accumBlueBits = pfd.cAccumBlueBits;
+            current.accumAlphaBits = pfd.cAccumAlphaBits;
+
+            current.auxBuffers = pfd.cAuxBuffers;
+
+            if (pfd.dwFlags & PFD_DOUBLEBUFFER)
+                current.doublebuffer = GLFW_TRUE;
+            if (pfd.dwFlags & PFD_STEREO)
+                current.stereo = GLFW_TRUE;
+        }
+
+        configDiff = _glfwCompareFBConfigs(fbconfig, &current);
+        if (configDiff < closestConfigDiff)
+        {
+            closestPixelFormat = pixelFormat;
+            closestConfigDiff = configDiff;
+        }
+    }
+
+    if (!accelerationAvailable)
+    {
+        _glfwInputError(GLFW_API_UNAVAILABLE,
+                        "WGL: The driver does not appear to support OpenGL");
+        return GLFW_FALSE;
+    }
+
+    if (!closestPixelFormat)
+    {
+        _glfwInputError(GLFW_FORMAT_UNAVAILABLE,
+                        "WGL: Failed to find a suitable pixel format");
+        return GLFW_FALSE;
+    }
+
+    window->wgl.pixelFormat = closestPixelFormat;
     if (!window->wgl.pixelFormat)
         return GLFW_FALSE;
 
@@ -763,6 +751,9 @@ GLFWbool _glfwSetFBConfigWGL(_GLFWwindow* window,
 
     return GLFW_TRUE;
 }
+
+#undef ADD_ATTRIB
+#undef FIND_ATTRIB_VALUE
 
 GLFWAPI HGLRC glfwGetWGLContext(GLFWwindow* handle)
 {

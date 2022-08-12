@@ -49,94 +49,6 @@ static int getGLXFBConfigAttrib(GLXFBConfig fbconfig, int attrib)
     return value;
 }
 
-// Return the GLXFBConfig most closely matching the specified hints
-//
-static GLFWbool chooseGLXFBConfig(const _GLFWfbconfig* fbconfig, GLXFBConfig* result)
-{
-    GLXFBConfig* configs;
-    int configCount;
-    GLXFBConfig* closestConfig = NULL;
-    uint32_t closestConfigDiff = UINT32_MAX;
-    const char* vendor;
-    GLFWbool trustWindowBit = GLFW_TRUE;
-
-    // HACK: This is a (hopefully temporary) workaround for Chromium
-    //       (VirtualBox GL) not setting the window bit on any GLXFBConfigs
-    vendor = glXGetClientString(_glfw.x11.display, GLX_VENDOR);
-    if (vendor && strcmp(vendor, "Chromium") == 0)
-        trustWindowBit = GLFW_FALSE;
-
-    configs = glXGetFBConfigs(_glfw.x11.display, _glfw.x11.screen, &configCount);
-    if (!configs || !configCount)
-    {
-        _glfwInputError(GLFW_API_UNAVAILABLE, "GLX: No GLXFBConfigs returned");
-        return GLFW_FALSE;
-    }
-
-    for (int i = 0;  i < configCount;  i++)
-    {
-        _GLFWfbconfig current = {0};
-
-        // Only consider RGBA GLXFBConfigs
-        if (!(getGLXFBConfigAttrib(configs[i], GLX_RENDER_TYPE) & GLX_RGBA_BIT))
-            continue;
-
-        // Only consider window GLXFBConfigs
-        if (!(getGLXFBConfigAttrib(configs[i], GLX_DRAWABLE_TYPE) & GLX_WINDOW_BIT))
-        {
-            if (trustWindowBit)
-                continue;
-        }
-
-        if (fbconfig->transparent)
-        {
-            XVisualInfo* vi = glXGetVisualFromFBConfig(_glfw.x11.display, configs[i]);
-            if (vi)
-            {
-                current.transparent = _glfwIsVisualTransparentX11(vi->visual);
-                XFree(vi);
-            }
-        }
-
-        current.redBits = getGLXFBConfigAttrib(configs[i], GLX_RED_SIZE);
-        current.greenBits = getGLXFBConfigAttrib(configs[i], GLX_GREEN_SIZE);
-        current.blueBits = getGLXFBConfigAttrib(configs[i], GLX_BLUE_SIZE);
-
-        current.alphaBits = getGLXFBConfigAttrib(configs[i], GLX_ALPHA_SIZE);
-        current.depthBits = getGLXFBConfigAttrib(configs[i], GLX_DEPTH_SIZE);
-        current.stencilBits = getGLXFBConfigAttrib(configs[i], GLX_STENCIL_SIZE);
-
-        current.accumRedBits = getGLXFBConfigAttrib(configs[i], GLX_ACCUM_RED_SIZE);
-        current.accumGreenBits = getGLXFBConfigAttrib(configs[i], GLX_ACCUM_GREEN_SIZE);
-        current.accumBlueBits = getGLXFBConfigAttrib(configs[i], GLX_ACCUM_BLUE_SIZE);
-        current.accumAlphaBits = getGLXFBConfigAttrib(configs[i], GLX_ACCUM_ALPHA_SIZE);
-
-        current.auxBuffers = getGLXFBConfigAttrib(configs[i], GLX_AUX_BUFFERS);
-        current.doublebuffer = getGLXFBConfigAttrib(configs[i], GLX_DOUBLEBUFFER);
-        current.stereo = getGLXFBConfigAttrib(configs[i], GLX_STEREO);
-
-        if (_glfw.glx.ARB_multisample)
-            current.samples = getGLXFBConfigAttrib(configs[i], GLX_SAMPLES);
-
-        if (_glfw.glx.ARB_framebuffer_sRGB || _glfw.glx.EXT_framebuffer_sRGB)
-            current.sRGB = getGLXFBConfigAttrib(configs[i], GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB);
-
-        const uint32_t currentDiff = _glfwCompareFBConfigs(fbconfig, &current);
-        if (currentDiff < closestConfigDiff)
-        {
-            closestConfig = &configs[i];
-            closestConfigDiff = currentDiff;
-        }
-    }
-
-    if (closestConfig)
-        *result = *closestConfig;
-
-    XFree(configs);
-
-    return closestConfig != NULL;
-}
-
 // Create the OpenGL context using legacy API
 //
 static GLXContext createLegacyContextGLX(_GLFWwindow* window,
@@ -636,7 +548,88 @@ GLFWbool _glfwSetFBConfigGLX(_GLFWwindow* window,
                              const _GLFWctxconfig* ctxconfig,
                              const _GLFWfbconfig* fbconfig)
 {
-    if (!chooseGLXFBConfig(fbconfig, &window->glx.config))
+    GLXFBConfig* configs;
+    int configCount;
+    GLXFBConfig* closestConfig = NULL;
+    uint32_t closestConfigDiff = UINT32_MAX;
+    const char* vendor;
+    GLFWbool trustWindowBit = GLFW_TRUE;
+
+    // HACK: This is a (hopefully temporary) workaround for Chromium
+    //       (VirtualBox GL) not setting the window bit on any GLXFBConfigs
+    vendor = glXGetClientString(_glfw.x11.display, GLX_VENDOR);
+    if (vendor && strcmp(vendor, "Chromium") == 0)
+        trustWindowBit = GLFW_FALSE;
+
+    configs = glXGetFBConfigs(_glfw.x11.display, _glfw.x11.screen, &configCount);
+    if (!configs || !configCount)
+    {
+        _glfwInputError(GLFW_API_UNAVAILABLE, "GLX: No GLXFBConfigs returned");
+        return GLFW_FALSE;
+    }
+
+    for (int i = 0;  i < configCount;  i++)
+    {
+        _GLFWfbconfig current = {0};
+
+        // Only consider RGBA GLXFBConfigs
+        if (!(getGLXFBConfigAttrib(configs[i], GLX_RENDER_TYPE) & GLX_RGBA_BIT))
+            continue;
+
+        // Only consider window GLXFBConfigs
+        if (!(getGLXFBConfigAttrib(configs[i], GLX_DRAWABLE_TYPE) & GLX_WINDOW_BIT))
+        {
+            if (trustWindowBit)
+                continue;
+        }
+
+        if (fbconfig->transparent)
+        {
+            XVisualInfo* vi = glXGetVisualFromFBConfig(_glfw.x11.display, configs[i]);
+            if (vi)
+            {
+                current.transparent = _glfwIsVisualTransparentX11(vi->visual);
+                XFree(vi);
+            }
+        }
+
+        current.redBits = getGLXFBConfigAttrib(configs[i], GLX_RED_SIZE);
+        current.greenBits = getGLXFBConfigAttrib(configs[i], GLX_GREEN_SIZE);
+        current.blueBits = getGLXFBConfigAttrib(configs[i], GLX_BLUE_SIZE);
+
+        current.alphaBits = getGLXFBConfigAttrib(configs[i], GLX_ALPHA_SIZE);
+        current.depthBits = getGLXFBConfigAttrib(configs[i], GLX_DEPTH_SIZE);
+        current.stencilBits = getGLXFBConfigAttrib(configs[i], GLX_STENCIL_SIZE);
+
+        current.accumRedBits = getGLXFBConfigAttrib(configs[i], GLX_ACCUM_RED_SIZE);
+        current.accumGreenBits = getGLXFBConfigAttrib(configs[i], GLX_ACCUM_GREEN_SIZE);
+        current.accumBlueBits = getGLXFBConfigAttrib(configs[i], GLX_ACCUM_BLUE_SIZE);
+        current.accumAlphaBits = getGLXFBConfigAttrib(configs[i], GLX_ACCUM_ALPHA_SIZE);
+
+        current.auxBuffers = getGLXFBConfigAttrib(configs[i], GLX_AUX_BUFFERS);
+        current.doublebuffer = getGLXFBConfigAttrib(configs[i], GLX_DOUBLEBUFFER);
+        current.stereo = getGLXFBConfigAttrib(configs[i], GLX_STEREO);
+
+        if (_glfw.glx.ARB_multisample)
+            current.samples = getGLXFBConfigAttrib(configs[i], GLX_SAMPLES);
+
+        if (_glfw.glx.ARB_framebuffer_sRGB || _glfw.glx.EXT_framebuffer_sRGB)
+            current.sRGB = getGLXFBConfigAttrib(configs[i], GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB);
+
+        const uint32_t currentDiff = _glfwCompareFBConfigs(fbconfig, &current);
+        if (currentDiff < closestConfigDiff)
+        {
+            closestConfig = &configs[i];
+            closestConfigDiff = currentDiff;
+        }
+    }
+
+    if (closestConfig)
+        window->glx.config = *closestConfig;
+
+    XFree(configs);
+
+    if (!window->glx.config)
     {
         _glfwInputError(GLFW_FORMAT_UNAVAILABLE,
                         "GLX: Failed to find a suitable GLXFBConfig");
