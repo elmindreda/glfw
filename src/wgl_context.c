@@ -54,16 +54,20 @@ static int findPixelFormatAttribValueWGL(const int* attribs,
     return 0;
 }
 
-static void makeContextCurrentWGL(_GLFWwindow* window)
+static void makeCurrentWGL(_GLFWwindow* window, _GLFWcontext* context)
 {
     if (window)
     {
-        if (wglMakeCurrent(window->wgl.dc, window->context.wgl.handle))
-            _glfwPlatformSetTls(&_glfw.contextSlot, window);
+        if (wglMakeCurrent(window->wgl.dc, context->wgl.handle))
+        {
+            _glfwPlatformSetTls(&_glfw.windowSlot, window);
+            _glfwPlatformSetTls(&_glfw.contextSlot, context);
+        }
         else
         {
             _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
                                  "WGL: Failed to make context current");
+            _glfwPlatformSetTls(&_glfw.windowSlot, NULL);
             _glfwPlatformSetTls(&_glfw.contextSlot, NULL);
         }
     }
@@ -75,6 +79,7 @@ static void makeContextCurrentWGL(_GLFWwindow* window)
                                  "WGL: Failed to clear current context");
         }
 
+        _glfwPlatformSetTls(&_glfw.windowSlot, NULL);
         _glfwPlatformSetTls(&_glfw.contextSlot, NULL);
     }
 }
@@ -102,7 +107,7 @@ static void swapBuffersWGL(_GLFWwindow* window)
 
 static void swapIntervalWGL(int interval)
 {
-    _GLFWwindow* window = _glfwPlatformGetTls(&_glfw.contextSlot);
+    _GLFWwindow* window = _glfwPlatformGetTls(&_glfw.windowSlot);
 
     window->wgl.interval = interval;
 
@@ -147,12 +152,12 @@ static GLFWglproc getProcAddressWGL(const char* procname)
     return (GLFWglproc) _glfwPlatformGetModuleSymbol(_glfw.wgl.instance, procname);
 }
 
-static void destroyContextWGL(_GLFWwindow* window)
+static void destroyContextWGL(_GLFWcontext* context)
 {
-    if (window->context.wgl.handle)
+    if (context->wgl.handle)
     {
-        wglDeleteContext(window->context.wgl.handle);
-        window->context.wgl.handle = NULL;
+        wglDeleteContext(context->wgl.handle);
+        context->wgl.handle = NULL;
     }
 }
 
@@ -326,13 +331,15 @@ void _glfwTerminateWGL(void)
 
 // Create the OpenGL or OpenGL ES context
 //
-static GLFWbool createContextWGL(_GLFWwindow* window, const _GLFWctxconfig* ctxconfig)
+static GLFWbool createContextWGL(_GLFWcontext* context,
+                                 const _GLFWwindow* window,
+                                 const _GLFWctxconfig* ctxconfig)
 {
     int attribs[40];
     HGLRC share = NULL;
 
     if (ctxconfig->share)
-        share = ctxconfig->share->context.wgl.handle;
+        share = ctxconfig->share->context->wgl.handle;
 
     if (ctxconfig->clientAPI == GLFW_OPENGL_API)
     {
@@ -447,9 +454,8 @@ static GLFWbool createContextWGL(_GLFWwindow* window, const _GLFWctxconfig* ctxc
 
         SET_ATTRIB(0, 0);
 
-        window->context.wgl.handle =
-            wglCreateContextAttribsARB(window->wgl.dc, share, attribs);
-        if (!window->context.wgl.handle)
+        context->wgl.handle = wglCreateContextAttribsARB(window->wgl.dc, share, attribs);
+        if (!context->wgl.handle)
         {
             const DWORD error = GetLastError();
 
@@ -499,8 +505,8 @@ static GLFWbool createContextWGL(_GLFWwindow* window, const _GLFWctxconfig* ctxc
     }
     else
     {
-        window->context.wgl.handle = wglCreateContext(window->wgl.dc);
-        if (!window->context.wgl.handle)
+        context->wgl.handle = wglCreateContext(window->wgl.dc);
+        if (!context->wgl.handle)
         {
             _glfwInputErrorWin32(GLFW_VERSION_UNAVAILABLE,
                                  "WGL: Failed to create OpenGL context");
@@ -509,7 +515,7 @@ static GLFWbool createContextWGL(_GLFWwindow* window, const _GLFWctxconfig* ctxc
 
         if (share)
         {
-            if (!wglShareLists(share, window->context.wgl.handle))
+            if (!wglShareLists(share, context->wgl.handle))
             {
                 _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
                                      "WGL: Failed to enable sharing with specified OpenGL context");
@@ -518,11 +524,11 @@ static GLFWbool createContextWGL(_GLFWwindow* window, const _GLFWctxconfig* ctxc
         }
     }
 
-    window->context.makeCurrent = makeContextCurrentWGL;
-    window->context.swapInterval = swapIntervalWGL;
-    window->context.extensionSupported = extensionSupportedWGL;
-    window->context.getProcAddress = getProcAddressWGL;
-    window->context.destroy = destroyContextWGL;
+    context->makeCurrent = makeCurrentWGL;
+    context->swapInterval = swapIntervalWGL;
+    context->extensionSupported = extensionSupportedWGL;
+    context->getProcAddress = getProcAddressWGL;
+    context->destroy = destroyContextWGL;
 
     return GLFW_TRUE;
 }
@@ -767,13 +773,13 @@ GLFWAPI HGLRC glfwGetWGLContext(GLFWwindow* handle)
         return NULL;
     }
 
-    if (window->context.creationAPI != GLFW_NATIVE_CONTEXT_API)
+    if (!window->context || window->context->creationAPI != GLFW_NATIVE_CONTEXT_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
         return NULL;
     }
 
-    return window->context.wgl.handle;
+    return window->context->wgl.handle;
 }
 
 #endif // _GLFW_WIN32

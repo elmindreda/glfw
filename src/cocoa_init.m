@@ -413,8 +413,8 @@ static GLFWbool initializeTIS(void)
 {
     for (_GLFWwindow* window = _glfw.windowListHead;  window;  window = window->next)
     {
-        if (window->context.clientAPI != GLFW_NO_API)
-            [window->context.nsgl.object update];
+        if (window->context && window->context->creationAPI == GLFW_NATIVE_CONTEXT_API)
+            [window->context->nsgl.object update];
     }
 
     _glfwPollMonitorsCocoa();

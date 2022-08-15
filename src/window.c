@@ -870,28 +870,37 @@ GLFWAPI int glfwGetWindowAttrib(GLFWwindow* handle, int attrib)
             return window->autoIconify;
         case GLFW_DOUBLEBUFFER:
             return window->doublebuffer;
-        case GLFW_CLIENT_API:
-            return window->context.clientAPI;
-        case GLFW_CONTEXT_CREATION_API:
-            return window->context.creationAPI;
-        case GLFW_CONTEXT_VERSION_MAJOR:
-            return window->context.major;
-        case GLFW_CONTEXT_VERSION_MINOR:
-            return window->context.minor;
-        case GLFW_CONTEXT_REVISION:
-            return window->context.revision;
-        case GLFW_CONTEXT_ROBUSTNESS:
-            return window->context.robustness;
-        case GLFW_OPENGL_FORWARD_COMPAT:
-            return window->context.forward;
-        case GLFW_CONTEXT_DEBUG:
-            return window->context.debug;
-        case GLFW_OPENGL_PROFILE:
-            return window->context.profile;
-        case GLFW_CONTEXT_RELEASE_BEHAVIOR:
-            return window->context.release;
-        case GLFW_CONTEXT_NO_ERROR:
-            return window->context.noerror;
+    }
+
+    if (window->context)
+    {
+        _GLFWcontext* context = window->context;
+
+        switch (attrib)
+        {
+            case GLFW_CLIENT_API:
+                return context->clientAPI;
+            case GLFW_CONTEXT_CREATION_API:
+                return context->creationAPI;
+            case GLFW_CONTEXT_VERSION_MAJOR:
+                return context->major;
+            case GLFW_CONTEXT_VERSION_MINOR:
+                return context->minor;
+            case GLFW_CONTEXT_REVISION:
+                return context->revision;
+            case GLFW_CONTEXT_ROBUSTNESS:
+                return context->robustness;
+            case GLFW_OPENGL_FORWARD_COMPAT:
+                return context->forward;
+            case GLFW_CONTEXT_DEBUG:
+                return context->debug;
+            case GLFW_OPENGL_PROFILE:
+                return context->profile;
+            case GLFW_CONTEXT_RELEASE_BEHAVIOR:
+                return context->release;
+            case GLFW_CONTEXT_NO_ERROR:
+                return context->noerror;
+        }
     }
 
     _glfwInputError(GLFW_INVALID_ENUM, "Invalid window attribute 0x%08X", attrib);

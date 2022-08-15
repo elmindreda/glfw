@@ -1457,7 +1457,7 @@ GLFWbool _glfwCreateWindowWin32(_GLFWwindow* window,
     {
         if (!_glfwCreateFramebuffer(window, fbconfig))
             return GLFW_FALSE;
-        if (!_glfwCreateContext(window, ctxconfig))
+        if (!_glfwCreateWindowContext(window, ctxconfig))
             return GLFW_FALSE;
     }
 
@@ -1492,7 +1492,7 @@ void _glfwDestroyWindowWin32(_GLFWwindow* window)
     if (window->monitor)
         releaseMonitor(window);
 
-    _glfwDestroyContext(window);
+    _glfwDestroyContext(window->context);
     _glfwDestroyFramebuffer(window);
 
     if (_glfw.win32.disabledCursorWindow == window)

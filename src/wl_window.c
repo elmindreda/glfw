@@ -2043,7 +2043,7 @@ GLFWbool _glfwCreateWindowWayland(_GLFWwindow* window,
 
         if (!_glfwCreateFramebuffer(window, fbconfig))
             return GLFW_FALSE;
-        if (!_glfwCreateContext(window, ctxconfig))
+        if (!_glfwCreateWindowContext(window, ctxconfig))
             return GLFW_FALSE;
     }
 
@@ -2079,7 +2079,7 @@ void _glfwDestroyWindowWayland(_GLFWwindow* window)
     if (window->wl.confinedPointer)
         zwp_confined_pointer_v1_destroy(window->wl.confinedPointer);
 
-    _glfwDestroyContext(window);
+    _glfwDestroyContext(window->context);
     _glfwDestroyFramebuffer(window);
 
     destroyShellObjects(window);

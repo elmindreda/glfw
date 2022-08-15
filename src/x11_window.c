@@ -2025,7 +2025,7 @@ GLFWbool _glfwCreateWindowX11(_GLFWwindow* window,
     {
         if (!_glfwCreateFramebuffer(window, fbconfig))
             return GLFW_FALSE;
-        if (!_glfwCreateContext(window, ctxconfig))
+        if (!_glfwCreateWindowContext(window, ctxconfig))
             return GLFW_FALSE;
     }
 
@@ -2069,7 +2069,7 @@ void _glfwDestroyWindowX11(_GLFWwindow* window)
         window->x11.ic = NULL;
     }
 
-    _glfwDestroyContext(window);
+    _glfwDestroyContext(window->context);
     _glfwDestroyFramebuffer(window);
 
     if (window->x11.handle)

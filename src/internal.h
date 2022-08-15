@@ -490,11 +490,11 @@ struct _GLFWcontext
     PFNGLGETINTEGERVPROC GetIntegerv;
     PFNGLGETSTRINGPROC   GetString;
 
-    void (*makeCurrent)(_GLFWwindow*);
+    void (*makeCurrent)(_GLFWwindow*,_GLFWcontext*);
     void (*swapInterval)(int);
     int (*extensionSupported)(const char*);
     GLFWglproc (*getProcAddress)(const char*);
-    void (*destroy)(_GLFWwindow*);
+    void (*destroy)(_GLFWcontext*);
 
     struct {
         EGLContext      handle;
@@ -542,7 +542,7 @@ struct _GLFWwindow
     double              virtualCursorPosX, virtualCursorPosY;
     GLFWbool            rawMouseMotion;
 
-    _GLFWcontext        context;
+    _GLFWcontext*       context;
 
     struct {
         GLFWwindowposfun          pos;
@@ -569,7 +569,7 @@ struct _GLFWwindow
 
     GLFWbool (*createFramebuffer)(_GLFWwindow*,const _GLFWfbconfig*);
     void (*destroyFramebuffer)(_GLFWwindow*);
-    GLFWbool (*createContext)(_GLFWwindow*,const _GLFWctxconfig*);
+    GLFWbool (*createContext)(_GLFWcontext*,const _GLFWwindow*,const _GLFWctxconfig*);
     void (*swapBuffers)(_GLFWwindow*);
 
     int                 framebufferAPI;
@@ -800,6 +800,7 @@ struct _GLFWlibrary
     int                 mappingCount;
 
     _GLFWtls            errorSlot;
+    _GLFWtls            windowSlot;
     _GLFWtls            contextSlot;
     _GLFWmutex          errorLock;
 
@@ -973,8 +974,10 @@ GLFWbool _glfwSetFBConfig(_GLFWwindow* window,
                           const _GLFWfbconfig* fbconfig);
 GLFWbool _glfwCreateFramebuffer(_GLFWwindow* window, const _GLFWfbconfig* fbconfig);
 void _glfwDestroyFramebuffer(_GLFWwindow* window);
-GLFWbool _glfwCreateContext(_GLFWwindow* window, const _GLFWctxconfig* ctxconfig);
-void _glfwDestroyContext(_GLFWwindow* window);
+_GLFWcontext* _glfwCreateContext(_GLFWwindow* window, const _GLFWctxconfig* ctxconfig);
+GLFWbool _glfwCreateWindowContext(_GLFWwindow* window, const _GLFWctxconfig* ctxconfig);
+void _glfwDestroyContext(_GLFWcontext* context);
+void _glfwMakeCurrent(_GLFWwindow* window, _GLFWcontext* context);
 
 const GLFWvidmode* _glfwChooseVideoMode(_GLFWmonitor* monitor,
                                         const GLFWvidmode* desired);

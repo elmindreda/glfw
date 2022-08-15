@@ -34,9 +34,9 @@
 #include "internal.h"
 
 
-static void makeContextCurrentOSMesa(_GLFWwindow* window)
+static void makeCurrentOSMesa(_GLFWwindow* window, _GLFWcontext* context)
 {
-    if (window)
+    if (context)
     {
         int width, height;
         _glfw.platform.getFramebufferSize(window, &width, &height);
@@ -54,7 +54,7 @@ static void makeContextCurrentOSMesa(_GLFWwindow* window)
             window->osmesa.height = height;
         }
 
-        if (!OSMesaMakeCurrent(window->context.osmesa.handle,
+        if (!OSMesaMakeCurrent(context->osmesa.handle,
                                window->osmesa.buffer,
                                GL_UNSIGNED_BYTE,
                                width, height))
@@ -65,7 +65,8 @@ static void makeContextCurrentOSMesa(_GLFWwindow* window)
         }
     }
 
-    _glfwPlatformSetTls(&_glfw.contextSlot, window);
+    _glfwPlatformSetTls(&_glfw.windowSlot, window);
+    _glfwPlatformSetTls(&_glfw.contextSlot, context);
 }
 
 static GLFWglproc getProcAddressOSMesa(const char* procname)
@@ -73,12 +74,12 @@ static GLFWglproc getProcAddressOSMesa(const char* procname)
     return (GLFWglproc) OSMesaGetProcAddress(procname);
 }
 
-static void destroyContextOSMesa(_GLFWwindow* window)
+static void destroyContextOSMesa(_GLFWcontext* context)
 {
-    if (window->context.osmesa.handle)
+    if (context->osmesa.handle)
     {
-        OSMesaDestroyContext(window->context.osmesa.handle);
-        window->context.osmesa.handle = NULL;
+        OSMesaDestroyContext(context->osmesa.handle);
+        context->osmesa.handle = NULL;
     }
 }
 
@@ -202,7 +203,9 @@ void _glfwTerminateOSMesa(void)
     attribs[index++] = v; \
 }
 
-static GLFWbool createContextOSMesa(_GLFWwindow* window, const _GLFWctxconfig* ctxconfig)
+static GLFWbool createContextOSMesa(_GLFWcontext* context,
+                                    const _GLFWwindow* window,
+                                    const _GLFWctxconfig* ctxconfig)
 {
     OSMesaContext share = NULL;
 
@@ -214,7 +217,7 @@ static GLFWbool createContextOSMesa(_GLFWwindow* window, const _GLFWctxconfig* c
     }
 
     if (ctxconfig->share)
-        share = ctxconfig->share->context.osmesa.handle;
+        share = ctxconfig->share->context->osmesa.handle;
 
     if (OSMesaCreateContextAttribs)
     {
@@ -249,8 +252,7 @@ static GLFWbool createContextOSMesa(_GLFWwindow* window, const _GLFWctxconfig* c
 
         SET_ATTRIB(0, 0);
 
-        window->context.osmesa.handle =
-            OSMesaCreateContextAttribs(attribs, share);
+        context->osmesa.handle = OSMesaCreateContextAttribs(attribs, share);
     }
     else
     {
@@ -261,7 +263,7 @@ static GLFWbool createContextOSMesa(_GLFWwindow* window, const _GLFWctxconfig* c
             return GLFW_FALSE;
         }
 
-        window->context.osmesa.handle =
+        context->osmesa.handle =
             OSMesaCreateContextExt(OSMESA_RGBA,
                                    window->osmesa.depthBits,
                                    window->osmesa.stencilBits,
@@ -269,18 +271,18 @@ static GLFWbool createContextOSMesa(_GLFWwindow* window, const _GLFWctxconfig* c
                                    share);
     }
 
-    if (window->context.osmesa.handle == NULL)
+    if (context->osmesa.handle == NULL)
     {
         _glfwInputError(GLFW_VERSION_UNAVAILABLE,
                         "OSMesa: Failed to create context");
         return GLFW_FALSE;
     }
 
-    window->context.makeCurrent = makeContextCurrentOSMesa;
-    window->context.swapInterval = swapIntervalOSMesa;
-    window->context.extensionSupported = extensionSupportedOSMesa;
-    window->context.getProcAddress = getProcAddressOSMesa;
-    window->context.destroy = destroyContextOSMesa;
+    context->makeCurrent = makeCurrentOSMesa;
+    context->swapInterval = swapIntervalOSMesa;
+    context->extensionSupported = extensionSupportedOSMesa;
+    context->getProcAddress = getProcAddressOSMesa;
+    context->destroy = destroyContextOSMesa;
 
     return GLFW_TRUE;
 }
@@ -349,13 +351,13 @@ GLFWAPI int glfwGetOSMesaDepthBuffer(GLFWwindow* handle,
 
     _GLFW_REQUIRE_INIT_OR_RETURN(GLFW_FALSE);
 
-    if (window->context.creationAPI != GLFW_OSMESA_CONTEXT_API)
+    if (!window->context || window->context->creationAPI != GLFW_OSMESA_CONTEXT_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
         return GLFW_FALSE;
     }
 
-    if (!OSMesaGetDepthBuffer(window->context.osmesa.handle,
+    if (!OSMesaGetDepthBuffer(window->context->osmesa.handle,
                               &mesaWidth, &mesaHeight,
                               &mesaBytes, &mesaBuffer))
     {
@@ -381,12 +383,12 @@ GLFWAPI OSMesaContext glfwGetOSMesaContext(GLFWwindow* handle)
     _GLFWwindow* window = (_GLFWwindow*) handle;
     _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
 
-    if (window->context.creationAPI != GLFW_OSMESA_CONTEXT_API)
+    if (!window->context || window->context->creationAPI != GLFW_OSMESA_CONTEXT_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
         return NULL;
     }
 
-    return window->context.osmesa.handle;
+    return window->context->osmesa.handle;
 }
 

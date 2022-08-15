@@ -33,16 +33,20 @@
 #include <unistd.h>
 #include <math.h>
 
-static void makeContextCurrentNSGL(_GLFWwindow* window)
+static void makeContextCurrentNSGL(_GLFWwindow* window, _GLFWcontext* context)
 {
     @autoreleasepool {
 
-    if (window)
-        [window->context.nsgl.object makeCurrentContext];
+    if (context)
+    {
+        [context->nsgl.object setView:window->ns.view];
+        [context->nsgl.object makeCurrentContext];
+    }
     else
         [NSOpenGLContext clearCurrentContext];
 
-    _glfwPlatformSetTls(&_glfw.contextSlot, window);
+    _glfwPlatformSetTls(&_glfw.windowSlot, window);
+    _glfwPlatformSetTls(&_glfw.contextSlot, context);
 
     } // autoreleasepool
 }
@@ -56,8 +60,8 @@ static void swapBuffersNSGL(_GLFWwindow* window)
     if (window->ns.occluded)
     {
         int interval = 0;
-        [window->context.nsgl.object getValues:&interval
-                                  forParameter:NSOpenGLContextParameterSwapInterval];
+        [window->context->nsgl.object getValues:&interval
+                                   forParameter:NSOpenGLContextParameterSwapInterval];
 
         if (interval > 0)
         {
@@ -73,7 +77,7 @@ static void swapBuffersNSGL(_GLFWwindow* window)
         }
     }
 
-    [window->context.nsgl.object flushBuffer];
+    [window->context->nsgl.object flushBuffer];
 
     } // autoreleasepool
 }
@@ -82,11 +86,11 @@ static void swapIntervalNSGL(int interval)
 {
     @autoreleasepool {
 
-    _GLFWwindow* window = _glfwPlatformGetTls(&_glfw.contextSlot);
-    if (window)
+    _GLFWcontext* context = _glfwPlatformGetTls(&_glfw.contextSlot);
+    if (context)
     {
-        [window->context.nsgl.object setValues:&interval
-                                  forParameter:NSOpenGLContextParameterSwapInterval];
+        [context->nsgl.object setValues:&interval
+                           forParameter:NSOpenGLContextParameterSwapInterval];
     }
 
     } // autoreleasepool
@@ -124,12 +128,12 @@ static void destroyFramebufferNSGL(_GLFWwindow* window)
     window->nsgl.pixelFormat = nil;
 }
 
-static void destroyContextNSGL(_GLFWwindow* window)
+static void destroyContextNSGL(_GLFWcontext* context)
 {
     @autoreleasepool {
 
-    [window->context.nsgl.object release];
-    window->context.nsgl.object = nil;
+    [context->nsgl.object release];
+    context->nsgl.object = nil;
 
     } // autoreleasepool
 }
@@ -166,7 +170,9 @@ void _glfwTerminateNSGL(void)
 
 // Create the OpenGL context
 //
-static GLFWbool createContextNSGL(_GLFWwindow* window, const _GLFWctxconfig* ctxconfig)
+static GLFWbool createContextNSGL(_GLFWcontext* context,
+                                  const _GLFWwindow* window,
+                                  const _GLFWctxconfig* ctxconfig)
 {
     if (ctxconfig->clientAPI == GLFW_OPENGL_ES_API)
     {
@@ -188,12 +194,12 @@ static GLFWbool createContextNSGL(_GLFWwindow* window, const _GLFWctxconfig* ctx
     NSOpenGLContext* share = nil;
 
     if (ctxconfig->share)
-        share = ctxconfig->share->context.nsgl.object;
+        share = ctxconfig->share->context->nsgl.object;
 
-    window->context.nsgl.object =
+    context->nsgl.object =
         [[NSOpenGLContext alloc] initWithFormat:window->nsgl.pixelFormat
                                    shareContext:share];
-    if (window->context.nsgl.object == nil)
+    if (context->nsgl.object == nil)
     {
         _glfwInputError(GLFW_VERSION_UNAVAILABLE,
                         "NSGL: Failed to create OpenGL context");
@@ -203,17 +209,15 @@ static GLFWbool createContextNSGL(_GLFWwindow* window, const _GLFWctxconfig* ctx
     if (window->nsgl.transparent)
     {
         GLint opaque = 0;
-        [window->context.nsgl.object setValues:&opaque
-                                  forParameter:NSOpenGLContextParameterSurfaceOpacity];
+        [context->nsgl.object setValues:&opaque
+                           forParameter:NSOpenGLContextParameterSurfaceOpacity];
     }
 
-    [window->context.nsgl.object setView:window->ns.view];
-
-    window->context.makeCurrent = makeContextCurrentNSGL;
-    window->context.swapInterval = swapIntervalNSGL;
-    window->context.extensionSupported = extensionSupportedNSGL;
-    window->context.getProcAddress = getProcAddressNSGL;
-    window->context.destroy = destroyContextNSGL;
+    context->makeCurrent = makeContextCurrentNSGL;
+    context->swapInterval = swapIntervalNSGL;
+    context->extensionSupported = extensionSupportedNSGL;
+    context->getProcAddress = getProcAddressNSGL;
+    context->destroy = destroyContextNSGL;
 
     return GLFW_TRUE;
 }
@@ -382,13 +386,13 @@ GLFWAPI id glfwGetNSGLContext(GLFWwindow* handle)
         return nil;
     }
 
-    if (window->context.creationAPI != GLFW_NATIVE_CONTEXT_API)
+    if (!window->context || window->context->creationAPI != GLFW_NATIVE_CONTEXT_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
         return nil;
     }
 
-    return window->context.nsgl.object;
+    return window->context->nsgl.object;
 }
 
 #endif // _GLFW_COCOA

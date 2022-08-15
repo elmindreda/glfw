@@ -85,14 +85,14 @@ static int getEGLConfigAttrib(EGLConfig config, int attrib)
     return value;
 }
 
-static void makeContextCurrentEGL(_GLFWwindow* window)
+static void makeCurrentEGL(_GLFWwindow* window, _GLFWcontext* context)
 {
-    if (window)
+    if (context)
     {
         if (!eglMakeCurrent(_glfw.egl.display,
                             window->egl.surface,
                             window->egl.surface,
-                            window->context.egl.handle))
+                            context->egl.handle))
         {
             _glfwInputError(GLFW_PLATFORM_ERROR,
                             "EGL: Failed to make context current: %s",
@@ -114,12 +114,13 @@ static void makeContextCurrentEGL(_GLFWwindow* window)
         }
     }
 
-    _glfwPlatformSetTls(&_glfw.contextSlot, window);
+    _glfwPlatformSetTls(&_glfw.windowSlot, window);
+    _glfwPlatformSetTls(&_glfw.contextSlot, context);
 }
 
 static void swapBuffersEGL(_GLFWwindow* window)
 {
-    if (window != _glfwPlatformGetTls(&_glfw.contextSlot))
+    if (window != _glfwPlatformGetTls(&_glfw.windowSlot))
     {
         _glfwInputError(GLFW_PLATFORM_ERROR,
                         "EGL: The context must be current on the calling thread when swapping buffers");
@@ -157,12 +158,12 @@ static int extensionSupportedEGL(const char* extension)
 
 static GLFWglproc getProcAddressEGL(const char* procname)
 {
-    _GLFWwindow* window = _glfwPlatformGetTls(&_glfw.contextSlot);
+    _GLFWcontext* context = _glfwPlatformGetTls(&_glfw.contextSlot);
 
-    if (window->context.egl.client)
+    if (context->egl.client)
     {
         GLFWglproc proc = (GLFWglproc)
-            _glfwPlatformGetModuleSymbol(window->context.egl.client, procname);
+            _glfwPlatformGetModuleSymbol(context->egl.client, procname);
         if (proc)
             return proc;
     }
@@ -170,24 +171,24 @@ static GLFWglproc getProcAddressEGL(const char* procname)
     return eglGetProcAddress(procname);
 }
 
-static void destroyContextEGL(_GLFWwindow* window)
+static void destroyContextEGL(_GLFWcontext* context)
 {
     // NOTE: Do not unload libGL.so.1 while the X11 display is still open,
     //       as it will make XCloseDisplay segfault
     if (_glfw.platform.platformID != GLFW_PLATFORM_X11 ||
-        window->context.clientAPI != GLFW_OPENGL_API)
+        context->clientAPI != GLFW_OPENGL_API)
     {
-        if (window->context.egl.client)
+        if (context->egl.client)
         {
-            _glfwPlatformFreeModule(window->context.egl.client);
-            window->context.egl.client = NULL;
+            _glfwPlatformFreeModule(context->egl.client);
+            context->egl.client = NULL;
         }
     }
 
-    if (window->context.egl.handle)
+    if (context->egl.handle)
     {
-        eglDestroyContext(_glfw.egl.display, window->context.egl.handle);
-        window->context.egl.handle = EGL_NO_CONTEXT;
+        eglDestroyContext(_glfw.egl.display, context->egl.handle);
+        context->egl.handle = EGL_NO_CONTEXT;
     }
 }
 
@@ -469,14 +470,16 @@ void _glfwTerminateEGL(void)
 
 // Create the OpenGL or OpenGL ES context
 //
-static GLFWbool createContextEGL(_GLFWwindow* window, const _GLFWctxconfig* ctxconfig)
+static GLFWbool createContextEGL(_GLFWcontext* context,
+                                 const _GLFWwindow* window,
+                                 const _GLFWctxconfig* ctxconfig)
 {
     EGLint attribs[40];
     EGLContext share = NULL;
     int index = 0;
 
     if (ctxconfig->share)
-        share = ctxconfig->share->context.egl.handle;
+        share = ctxconfig->share->context->egl.handle;
 
     if (ctxconfig->clientAPI == GLFW_OPENGL_ES_API)
     {
@@ -573,10 +576,10 @@ static GLFWbool createContextEGL(_GLFWwindow* window, const _GLFWctxconfig* ctxc
 
     SET_ATTRIB(EGL_NONE, EGL_NONE);
 
-    window->context.egl.handle = eglCreateContext(_glfw.egl.display,
-                                                  window->egl.config, share, attribs);
+    context->egl.handle = eglCreateContext(_glfw.egl.display,
+                                           window->egl.config, share, attribs);
 
-    if (window->context.egl.handle == EGL_NO_CONTEXT)
+    if (context->egl.handle == EGL_NO_CONTEXT)
     {
         _glfwInputError(GLFW_VERSION_UNAVAILABLE,
                         "EGL: Failed to create context: %s",
@@ -656,12 +659,12 @@ static GLFWbool createContextEGL(_GLFWwindow* window, const _GLFWctxconfig* ctxc
             if (_glfw.egl.prefix != (strncmp(sonames[i], "lib", 3) == 0))
                 continue;
 
-            window->context.egl.client = _glfwPlatformLoadModule(sonames[i]);
-            if (window->context.egl.client)
+            context->egl.client = _glfwPlatformLoadModule(sonames[i]);
+            if (context->egl.client)
                 break;
         }
 
-        if (!window->context.egl.client)
+        if (!context->egl.client)
         {
             _glfwInputError(GLFW_API_UNAVAILABLE,
                             "EGL: Failed to load client library");
@@ -669,11 +672,11 @@ static GLFWbool createContextEGL(_GLFWwindow* window, const _GLFWctxconfig* ctxc
         }
     }
 
-    window->context.makeCurrent = makeContextCurrentEGL;
-    window->context.swapInterval = swapIntervalEGL;
-    window->context.extensionSupported = extensionSupportedEGL;
-    window->context.getProcAddress = getProcAddressEGL;
-    window->context.destroy = destroyContextEGL;
+    context->makeCurrent = makeCurrentEGL;
+    context->swapInterval = swapIntervalEGL;
+    context->extensionSupported = extensionSupportedEGL;
+    context->getProcAddress = getProcAddressEGL;
+    context->destroy = destroyContextEGL;
 
     return GLFW_TRUE;
 }
@@ -853,13 +856,13 @@ GLFWAPI EGLContext glfwGetEGLContext(GLFWwindow* handle)
     _GLFWwindow* window = (_GLFWwindow*) handle;
     _GLFW_REQUIRE_INIT_OR_RETURN(EGL_NO_CONTEXT);
 
-    if (window->context.creationAPI != GLFW_EGL_CONTEXT_API)
+    if (!window->context || window->context->creationAPI != GLFW_EGL_CONTEXT_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
         return EGL_NO_CONTEXT;
     }
 
-    return window->context.egl.handle;
+    return window->context->egl.handle;
 }
 
 GLFWAPI EGLSurface glfwGetEGLSurface(GLFWwindow* handle)

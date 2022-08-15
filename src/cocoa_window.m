@@ -230,8 +230,8 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)windowDidResize:(NSNotification *)notification
 {
-    if (window->context.creationAPI == GLFW_NATIVE_CONTEXT_API)
-        [window->context.nsgl.object update];
+    if (window->context && window->context->creationAPI == GLFW_NATIVE_CONTEXT_API)
+        [window->context->nsgl.object update];
 
     if (_glfw.ns.disabledCursorWindow == window)
         _glfwCenterCursorInContentArea(window);
@@ -265,8 +265,8 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)windowDidMove:(NSNotification *)notification
 {
-    if (window->context.creationAPI == GLFW_NATIVE_CONTEXT_API)
-        [window->context.nsgl.object update];
+    if (window->context && window->context->creationAPI == GLFW_NATIVE_CONTEXT_API)
+        [window->context->nsgl.object update];
 
     if (_glfw.ns.disabledCursorWindow == window)
         _glfwCenterCursorInContentArea(window);
@@ -382,8 +382,8 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)updateLayer
 {
-    if (window->context.creationAPI == GLFW_NATIVE_CONTEXT_API)
-        [window->context.nsgl.object update];
+    if (window->context && window->context->creationAPI == GLFW_NATIVE_CONTEXT_API)
+        [window->context->nsgl.object update];
 
     _glfwInputWindowDamage(window);
 }
@@ -941,7 +941,7 @@ GLFWbool _glfwCreateWindowCocoa(_GLFWwindow* window,
 
         if (!_glfwCreateFramebuffer(window, fbconfig))
             return GLFW_FALSE;
-        if (!_glfwCreateContext(window, ctxconfig))
+        if (!_glfwCreateWindowContext(window, ctxconfig))
             return GLFW_FALSE;
     }
 
@@ -984,7 +984,7 @@ void _glfwDestroyWindowCocoa(_GLFWwindow* window)
     if (window->monitor)
         releaseMonitor(window);
 
-    _glfwDestroyContext(window);
+    _glfwDestroyContext(window->context);
     _glfwDestroyFramebuffer(window);
 
     [window->ns.object setDelegate:nil];
