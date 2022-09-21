@@ -256,14 +256,12 @@ typedef OSMesaContext (GLAPIENTRY * PFN_OSMesaCreateContextExt)(GLenum,GLint,GLi
 typedef OSMesaContext (GLAPIENTRY * PFN_OSMesaCreateContextAttribs)(const int*,OSMesaContext);
 typedef void (GLAPIENTRY * PFN_OSMesaDestroyContext)(OSMesaContext);
 typedef int (GLAPIENTRY * PFN_OSMesaMakeCurrent)(OSMesaContext,void*,int,int,int);
-typedef int (GLAPIENTRY * PFN_OSMesaGetColorBuffer)(OSMesaContext,int*,int*,int*,void**);
 typedef int (GLAPIENTRY * PFN_OSMesaGetDepthBuffer)(OSMesaContext,int*,int*,int*,void**);
 typedef GLFWglproc (GLAPIENTRY * PFN_OSMesaGetProcAddress)(const char*);
 #define OSMesaCreateContextExt _glfw.osmesa.CreateContextExt
 #define OSMesaCreateContextAttribs _glfw.osmesa.CreateContextAttribs
 #define OSMesaDestroyContext _glfw.osmesa.DestroyContext
 #define OSMesaMakeCurrent _glfw.osmesa.MakeCurrent
-#define OSMesaGetColorBuffer _glfw.osmesa.GetColorBuffer
 #define OSMesaGetDepthBuffer _glfw.osmesa.GetDepthBuffer
 #define OSMesaGetProcAddress _glfw.osmesa.GetProcAddress
 
@@ -853,7 +851,6 @@ struct _GLFWlibrary
         PFN_OSMesaCreateContextAttribs  CreateContextAttribs;
         PFN_OSMesaDestroyContext        DestroyContext;
         PFN_OSMesaMakeCurrent           MakeCurrent;
-        PFN_OSMesaGetColorBuffer        GetColorBuffer;
         PFN_OSMesaGetDepthBuffer        GetDepthBuffer;
         PFN_OSMesaGetProcAddress        GetProcAddress;
 

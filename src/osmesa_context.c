@@ -157,8 +157,6 @@ GLFWbool _glfwInitOSMesa(void)
         _glfwPlatformGetModuleSymbol(_glfw.osmesa.handle, "OSMesaDestroyContext");
     _glfw.osmesa.MakeCurrent = (PFN_OSMesaMakeCurrent)
         _glfwPlatformGetModuleSymbol(_glfw.osmesa.handle, "OSMesaMakeCurrent");
-    _glfw.osmesa.GetColorBuffer = (PFN_OSMesaGetColorBuffer)
-        _glfwPlatformGetModuleSymbol(_glfw.osmesa.handle, "OSMesaGetColorBuffer");
     _glfw.osmesa.GetDepthBuffer = (PFN_OSMesaGetDepthBuffer)
         _glfwPlatformGetModuleSymbol(_glfw.osmesa.handle, "OSMesaGetDepthBuffer");
     _glfw.osmesa.GetProcAddress = (PFN_OSMesaGetProcAddress)
@@ -167,7 +165,6 @@ GLFWbool _glfwInitOSMesa(void)
     if (!_glfw.osmesa.CreateContextExt ||
         !_glfw.osmesa.DestroyContext ||
         !_glfw.osmesa.MakeCurrent ||
-        !_glfw.osmesa.GetColorBuffer ||
         !_glfw.osmesa.GetDepthBuffer ||
         !_glfw.osmesa.GetProcAddress)
     {
@@ -298,8 +295,6 @@ GLFWbool _glfwCreateContextOSMesa(_GLFWwindow* window,
 GLFWAPI int glfwGetOSMesaColorBuffer(GLFWwindow* handle, int* width,
                                      int* height, int* format, void** buffer)
 {
-    void* mesaBuffer;
-    GLint mesaWidth, mesaHeight, mesaFormat;
     _GLFWwindow* window = (_GLFWwindow*) handle;
     assert(window != NULL);
 
@@ -311,23 +306,14 @@ GLFWAPI int glfwGetOSMesaColorBuffer(GLFWwindow* handle, int* width,
         return GLFW_FALSE;
     }
 
-    if (!OSMesaGetColorBuffer(window->context.osmesa.handle,
-                              &mesaWidth, &mesaHeight,
-                              &mesaFormat, &mesaBuffer))
-    {
-        _glfwInputError(GLFW_PLATFORM_ERROR,
-                        "OSMesa: Failed to retrieve color buffer");
-        return GLFW_FALSE;
-    }
-
     if (width)
-        *width = mesaWidth;
+        *width = window->osmesa.width;
     if (height)
-        *height = mesaHeight;
+        *height = window->osmesa.height;
     if (format)
-        *format = mesaFormat;
+        *format = GL_UNSIGNED_BYTE;
     if (buffer)
-        *buffer = mesaBuffer;
+        *buffer = window->osmesa.buffer;
 
     return GLFW_TRUE;
 }
