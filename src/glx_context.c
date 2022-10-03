@@ -51,13 +51,12 @@ static int getGLXFBConfigAttrib(GLXFBConfig fbconfig, int attrib)
 
 // Return the GLXFBConfig most closely matching the specified hints
 //
-static GLFWbool chooseGLXFBConfig(const _GLFWfbconfig* desired,
-                                  GLXFBConfig* result)
+static GLFWbool chooseGLXFBConfig(const _GLFWfbconfig* fbconfig, GLXFBConfig* result)
 {
-    GLXFBConfig* nativeConfigs;
-    _GLFWfbconfig* usableConfigs;
-    const _GLFWfbconfig* closest;
-    int nativeCount, usableCount;
+    GLXFBConfig* configs;
+    int configCount;
+    GLXFBConfig* closestConfig = NULL;
+    uint32_t closestConfigDiff = UINT32_MAX;
     const char* vendor;
     GLFWbool trustWindowBit = GLFW_TRUE;
 
@@ -67,82 +66,79 @@ static GLFWbool chooseGLXFBConfig(const _GLFWfbconfig* desired,
     if (vendor && strcmp(vendor, "Chromium") == 0)
         trustWindowBit = GLFW_FALSE;
 
-    nativeConfigs =
-        glXGetFBConfigs(_glfw.x11.display, _glfw.x11.screen, &nativeCount);
-    if (!nativeConfigs || !nativeCount)
+    configs = glXGetFBConfigs(_glfw.x11.display, _glfw.x11.screen, &configCount);
+    if (!configs || !configCount)
     {
         _glfwInputError(GLFW_API_UNAVAILABLE, "GLX: No GLXFBConfigs returned");
         return GLFW_FALSE;
     }
 
-    usableConfigs = _glfw_calloc(nativeCount, sizeof(_GLFWfbconfig));
-    usableCount = 0;
-
-    for (int i = 0;  i < nativeCount;  i++)
+    for (int i = 0;  i < configCount;  i++)
     {
-        const GLXFBConfig n = nativeConfigs[i];
-        _GLFWfbconfig* u = usableConfigs + usableCount;
+        _GLFWfbconfig current = {0};
 
         // Only consider RGBA GLXFBConfigs
-        if (!(getGLXFBConfigAttrib(n, GLX_RENDER_TYPE) & GLX_RGBA_BIT))
+        if (!(getGLXFBConfigAttrib(configs[i], GLX_RENDER_TYPE) & GLX_RGBA_BIT))
             continue;
 
         // Only consider window GLXFBConfigs
-        if (!(getGLXFBConfigAttrib(n, GLX_DRAWABLE_TYPE) & GLX_WINDOW_BIT))
+        if (!(getGLXFBConfigAttrib(configs[i], GLX_DRAWABLE_TYPE) & GLX_WINDOW_BIT))
         {
             if (trustWindowBit)
                 continue;
         }
 
-        if (getGLXFBConfigAttrib(n, GLX_DOUBLEBUFFER) != desired->doublebuffer)
+        if (getGLXFBConfigAttrib(configs[i], GLX_DOUBLEBUFFER) != fbconfig->doublebuffer)
             continue;
 
-        if (desired->transparent)
+        if (fbconfig->transparent)
         {
-            XVisualInfo* vi = glXGetVisualFromFBConfig(_glfw.x11.display, n);
+            XVisualInfo* vi = glXGetVisualFromFBConfig(_glfw.x11.display, configs[i]);
             if (vi)
             {
-                u->transparent = _glfwIsVisualTransparentX11(vi->visual);
+                current.transparent = _glfwIsVisualTransparentX11(vi->visual);
                 XFree(vi);
             }
         }
 
-        u->redBits = getGLXFBConfigAttrib(n, GLX_RED_SIZE);
-        u->greenBits = getGLXFBConfigAttrib(n, GLX_GREEN_SIZE);
-        u->blueBits = getGLXFBConfigAttrib(n, GLX_BLUE_SIZE);
+        current.redBits = getGLXFBConfigAttrib(configs[i], GLX_RED_SIZE);
+        current.greenBits = getGLXFBConfigAttrib(configs[i], GLX_GREEN_SIZE);
+        current.blueBits = getGLXFBConfigAttrib(configs[i], GLX_BLUE_SIZE);
 
-        u->alphaBits = getGLXFBConfigAttrib(n, GLX_ALPHA_SIZE);
-        u->depthBits = getGLXFBConfigAttrib(n, GLX_DEPTH_SIZE);
-        u->stencilBits = getGLXFBConfigAttrib(n, GLX_STENCIL_SIZE);
+        current.alphaBits = getGLXFBConfigAttrib(configs[i], GLX_ALPHA_SIZE);
+        current.depthBits = getGLXFBConfigAttrib(configs[i], GLX_DEPTH_SIZE);
+        current.stencilBits = getGLXFBConfigAttrib(configs[i], GLX_STENCIL_SIZE);
 
-        u->accumRedBits = getGLXFBConfigAttrib(n, GLX_ACCUM_RED_SIZE);
-        u->accumGreenBits = getGLXFBConfigAttrib(n, GLX_ACCUM_GREEN_SIZE);
-        u->accumBlueBits = getGLXFBConfigAttrib(n, GLX_ACCUM_BLUE_SIZE);
-        u->accumAlphaBits = getGLXFBConfigAttrib(n, GLX_ACCUM_ALPHA_SIZE);
+        current.accumRedBits = getGLXFBConfigAttrib(configs[i], GLX_ACCUM_RED_SIZE);
+        current.accumGreenBits = getGLXFBConfigAttrib(configs[i], GLX_ACCUM_GREEN_SIZE);
+        current.accumBlueBits = getGLXFBConfigAttrib(configs[i], GLX_ACCUM_BLUE_SIZE);
+        current.accumAlphaBits = getGLXFBConfigAttrib(configs[i], GLX_ACCUM_ALPHA_SIZE);
 
-        u->auxBuffers = getGLXFBConfigAttrib(n, GLX_AUX_BUFFERS);
+        current.auxBuffers = getGLXFBConfigAttrib(configs[i], GLX_AUX_BUFFERS);
 
-        if (getGLXFBConfigAttrib(n, GLX_STEREO))
-            u->stereo = GLFW_TRUE;
+        if (getGLXFBConfigAttrib(configs[i], GLX_STEREO))
+            current.stereo = GLFW_TRUE;
 
         if (_glfw.glx.ARB_multisample)
-            u->samples = getGLXFBConfigAttrib(n, GLX_SAMPLES);
+            current.samples = getGLXFBConfigAttrib(configs[i], GLX_SAMPLES);
 
         if (_glfw.glx.ARB_framebuffer_sRGB || _glfw.glx.EXT_framebuffer_sRGB)
-            u->sRGB = getGLXFBConfigAttrib(n, GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB);
+            current.sRGB = getGLXFBConfigAttrib(configs[i], GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB);
 
-        u->handle = (uintptr_t) n;
-        usableCount++;
+        const uint32_t currentDiff = _glfwCompareFBConfigs(fbconfig, &current);
+        if (currentDiff < closestConfigDiff)
+        {
+            closestConfig = &configs[i];
+            closestConfigDiff = currentDiff;
+        }
     }
 
-    closest = _glfwChooseFBConfig(desired, usableConfigs, usableCount);
-    if (closest)
-        *result = (GLXFBConfig) closest->handle;
+    if (closestConfig)
+        *result = *closestConfig;
 
-    XFree(nativeConfigs);
-    _glfw_free(usableConfigs);
+    XFree(configs);
 
-    return closest != NULL;
+    return closestConfig != NULL;
 }
 
 // Create the OpenGL context using legacy API

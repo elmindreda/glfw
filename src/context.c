@@ -182,164 +182,120 @@ GLFWbool _glfwIsValidContextConfig(const _GLFWctxconfig* ctxconfig)
 
 // Chooses the framebuffer config that best matches the desired one
 //
-const _GLFWfbconfig* _glfwChooseFBConfig(const _GLFWfbconfig* desired,
-                                         const _GLFWfbconfig* alternatives,
-                                         unsigned int count)
+uint32_t _glfwCompareFBConfigs(const _GLFWfbconfig* desired, const _GLFWfbconfig* actual)
 {
-    unsigned int i;
-    unsigned int missing, leastMissing = UINT_MAX;
-    unsigned int colorDiff, leastColorDiff = UINT_MAX;
-    unsigned int extraDiff, leastExtraDiff = UINT_MAX;
-    const _GLFWfbconfig* current;
-    const _GLFWfbconfig* closest = NULL;
+    unsigned int missing = 0, colorDiff = 0, extraDiff = 0;
 
-    for (i = 0;  i < count;  i++)
+    // Count number of missing buffers
     {
-        current = alternatives + i;
+        if (desired->alphaBits > 0 && actual->alphaBits == 0)
+            missing++;
 
-        if (desired->stereo > 0 && current->stereo == 0)
+        if (desired->depthBits > 0 && actual->depthBits == 0)
+            missing++;
+
+        if (desired->stencilBits > 0 && actual->stencilBits == 0)
+            missing++;
+
+        if (desired->auxBuffers > 0 &&
+            actual->auxBuffers < desired->auxBuffers)
         {
-            // Stereo is a hard constraint
-            continue;
+            missing += desired->auxBuffers - actual->auxBuffers;
         }
 
-        // Count number of missing buffers
+        if (desired->samples > 0 && actual->samples == 0)
         {
-            missing = 0;
-
-            if (desired->alphaBits > 0 && current->alphaBits == 0)
-                missing++;
-
-            if (desired->depthBits > 0 && current->depthBits == 0)
-                missing++;
-
-            if (desired->stencilBits > 0 && current->stencilBits == 0)
-                missing++;
-
-            if (desired->auxBuffers > 0 &&
-                current->auxBuffers < desired->auxBuffers)
-            {
-                missing += desired->auxBuffers - current->auxBuffers;
-            }
-
-            if (desired->samples > 0 && current->samples == 0)
-            {
-                // Technically, several multisampling buffers could be
-                // involved, but that's a lower level implementation detail and
-                // not important to us here, so we count them as one
-                missing++;
-            }
-
-            if (desired->transparent != current->transparent)
-                missing++;
+            // Technically, several multisampling buffers could be
+            // involved, but that's a lower level implementation detail and
+            // not important to us here, so we count them as one
+            missing++;
         }
 
-        // These polynomials make many small channel size differences matter
-        // less than one large channel size difference
+        if (desired->transparent != actual->transparent)
+            missing++;
+    }
 
-        // Calculate color channel size difference value
+    // These polynomials make many small channel size differences matter
+    // less than one large channel size difference
+
+    // Calculate color channel size difference value
+    {
+        if (desired->redBits != GLFW_DONT_CARE)
         {
-            colorDiff = 0;
-
-            if (desired->redBits != GLFW_DONT_CARE)
-            {
-                colorDiff += (desired->redBits - current->redBits) *
-                             (desired->redBits - current->redBits);
-            }
-
-            if (desired->greenBits != GLFW_DONT_CARE)
-            {
-                colorDiff += (desired->greenBits - current->greenBits) *
-                             (desired->greenBits - current->greenBits);
-            }
-
-            if (desired->blueBits != GLFW_DONT_CARE)
-            {
-                colorDiff += (desired->blueBits - current->blueBits) *
-                             (desired->blueBits - current->blueBits);
-            }
+            colorDiff += (desired->redBits - actual->redBits) *
+                            (desired->redBits - actual->redBits);
         }
 
-        // Calculate non-color channel size difference value
+        if (desired->greenBits != GLFW_DONT_CARE)
         {
-            extraDiff = 0;
-
-            if (desired->alphaBits != GLFW_DONT_CARE)
-            {
-                extraDiff += (desired->alphaBits - current->alphaBits) *
-                             (desired->alphaBits - current->alphaBits);
-            }
-
-            if (desired->depthBits != GLFW_DONT_CARE)
-            {
-                extraDiff += (desired->depthBits - current->depthBits) *
-                             (desired->depthBits - current->depthBits);
-            }
-
-            if (desired->stencilBits != GLFW_DONT_CARE)
-            {
-                extraDiff += (desired->stencilBits - current->stencilBits) *
-                             (desired->stencilBits - current->stencilBits);
-            }
-
-            if (desired->accumRedBits != GLFW_DONT_CARE)
-            {
-                extraDiff += (desired->accumRedBits - current->accumRedBits) *
-                             (desired->accumRedBits - current->accumRedBits);
-            }
-
-            if (desired->accumGreenBits != GLFW_DONT_CARE)
-            {
-                extraDiff += (desired->accumGreenBits - current->accumGreenBits) *
-                             (desired->accumGreenBits - current->accumGreenBits);
-            }
-
-            if (desired->accumBlueBits != GLFW_DONT_CARE)
-            {
-                extraDiff += (desired->accumBlueBits - current->accumBlueBits) *
-                             (desired->accumBlueBits - current->accumBlueBits);
-            }
-
-            if (desired->accumAlphaBits != GLFW_DONT_CARE)
-            {
-                extraDiff += (desired->accumAlphaBits - current->accumAlphaBits) *
-                             (desired->accumAlphaBits - current->accumAlphaBits);
-            }
-
-            if (desired->samples != GLFW_DONT_CARE)
-            {
-                extraDiff += (desired->samples - current->samples) *
-                             (desired->samples - current->samples);
-            }
-
-            if (desired->sRGB && !current->sRGB)
-                extraDiff++;
+            colorDiff += (desired->greenBits - actual->greenBits) *
+                            (desired->greenBits - actual->greenBits);
         }
 
-        // Figure out if the current one is better than the best one found so far
-        // Least number of missing buffers is the most important heuristic,
-        // then color buffer size match and lastly size match for other buffers
-
-        if (missing < leastMissing)
-            closest = current;
-        else if (missing == leastMissing)
+        if (desired->blueBits != GLFW_DONT_CARE)
         {
-            if ((colorDiff < leastColorDiff) ||
-                (colorDiff == leastColorDiff && extraDiff < leastExtraDiff))
-            {
-                closest = current;
-            }
-        }
-
-        if (current == closest)
-        {
-            leastMissing = missing;
-            leastColorDiff = colorDiff;
-            leastExtraDiff = extraDiff;
+            colorDiff += (desired->blueBits - actual->blueBits) *
+                            (desired->blueBits - actual->blueBits);
         }
     }
 
-    return closest;
+    // Calculate non-color channel size difference value
+    {
+        if (desired->alphaBits != GLFW_DONT_CARE)
+        {
+            extraDiff += (desired->alphaBits - actual->alphaBits) *
+                            (desired->alphaBits - actual->alphaBits);
+        }
+
+        if (desired->depthBits != GLFW_DONT_CARE)
+        {
+            extraDiff += (desired->depthBits - actual->depthBits) *
+                            (desired->depthBits - actual->depthBits);
+        }
+
+        if (desired->stencilBits != GLFW_DONT_CARE)
+        {
+            extraDiff += (desired->stencilBits - actual->stencilBits) *
+                            (desired->stencilBits - actual->stencilBits);
+        }
+
+        if (desired->accumRedBits != GLFW_DONT_CARE)
+        {
+            extraDiff += (desired->accumRedBits - actual->accumRedBits) *
+                            (desired->accumRedBits - actual->accumRedBits);
+        }
+
+        if (desired->accumGreenBits != GLFW_DONT_CARE)
+        {
+            extraDiff += (desired->accumGreenBits - actual->accumGreenBits) *
+                            (desired->accumGreenBits - actual->accumGreenBits);
+        }
+
+        if (desired->accumBlueBits != GLFW_DONT_CARE)
+        {
+            extraDiff += (desired->accumBlueBits - actual->accumBlueBits) *
+                            (desired->accumBlueBits - actual->accumBlueBits);
+        }
+
+        if (desired->accumAlphaBits != GLFW_DONT_CARE)
+        {
+            extraDiff += (desired->accumAlphaBits - actual->accumAlphaBits) *
+                            (desired->accumAlphaBits - actual->accumAlphaBits);
+        }
+
+        if (desired->samples != GLFW_DONT_CARE)
+        {
+            extraDiff += (desired->samples - actual->samples) *
+                            (desired->samples - actual->samples);
+        }
+
+        if (desired->sRGB && !actual->sRGB)
+            extraDiff++;
+    }
+
+    return ((uint32_t) _glfw_min(missing, 1023) << 20) +
+           ((uint32_t) _glfw_min(colorDiff, 1023) << 10) +
+           (uint32_t) _glfw_min(extraDiff, 1023);
 }
 
 // Retrieves the attributes of the current context

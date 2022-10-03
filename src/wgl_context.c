@@ -68,13 +68,13 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
                                 const _GLFWctxconfig* ctxconfig,
                                 const _GLFWfbconfig* fbconfig)
 {
-    _GLFWfbconfig* usableConfigs;
-    const _GLFWfbconfig* closest;
-    int i, pixelFormat, nativeCount, usableCount = 0, attribCount = 0;
+    uint32_t closestConfigDiff = UINT32_MAX;
+    int i, formatCount, closestPixelFormat = 0, attribCount = 0;
     int attribs[40];
     int values[sizeof(attribs) / sizeof(attribs[0])];
+    GLFWbool accelerationAvailable = GLFW_FALSE;
 
-    nativeCount = DescribePixelFormat(window->context.wgl.dc,
+    formatCount = DescribePixelFormat(window->context.wgl.dc,
                                       1,
                                       sizeof(PIXELFORMATDESCRIPTOR),
                                       NULL);
@@ -119,12 +119,11 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
         }
     }
 
-    usableConfigs = _glfw_calloc(nativeCount, sizeof(_GLFWfbconfig));
-
-    for (i = 0;  i < nativeCount;  i++)
+    for (i = 0;  i < formatCount;  i++)
     {
-        _GLFWfbconfig* u = usableConfigs + usableCount;
-        pixelFormat = i + 1;
+        _GLFWfbconfig current = {0};
+        const int pixelFormat = i + 1;
+        uint32_t configDiff;
 
         if (_glfw.wgl.ARB_pixel_format)
         {
@@ -136,9 +135,7 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
                                               attribs, values))
             {
                 _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
-                                    "WGL: Failed to retrieve pixel format attributes");
-
-                _glfw_free(usableConfigs);
+                                     "WGL: Failed to retrieve pixel format attributes");
                 return 0;
             }
 
@@ -154,29 +151,31 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
             if (FIND_ATTRIB_VALUE(WGL_ACCELERATION_ARB) == WGL_NO_ACCELERATION_ARB)
                 continue;
 
+            accelerationAvailable = GLFW_TRUE;
+
             if (FIND_ATTRIB_VALUE(WGL_DOUBLE_BUFFER_ARB) != fbconfig->doublebuffer)
                 continue;
 
-            u->redBits = FIND_ATTRIB_VALUE(WGL_RED_BITS_ARB);
-            u->greenBits = FIND_ATTRIB_VALUE(WGL_GREEN_BITS_ARB);
-            u->blueBits = FIND_ATTRIB_VALUE(WGL_BLUE_BITS_ARB);
-            u->alphaBits = FIND_ATTRIB_VALUE(WGL_ALPHA_BITS_ARB);
+            if (!FIND_ATTRIB_VALUE(WGL_STEREO_ARB) && fbconfig->stereo)
+                continue;
 
-            u->depthBits = FIND_ATTRIB_VALUE(WGL_DEPTH_BITS_ARB);
-            u->stencilBits = FIND_ATTRIB_VALUE(WGL_STENCIL_BITS_ARB);
+            current.redBits = FIND_ATTRIB_VALUE(WGL_RED_BITS_ARB);
+            current.greenBits = FIND_ATTRIB_VALUE(WGL_GREEN_BITS_ARB);
+            current.blueBits = FIND_ATTRIB_VALUE(WGL_BLUE_BITS_ARB);
+            current.alphaBits = FIND_ATTRIB_VALUE(WGL_ALPHA_BITS_ARB);
 
-            u->accumRedBits = FIND_ATTRIB_VALUE(WGL_ACCUM_RED_BITS_ARB);
-            u->accumGreenBits = FIND_ATTRIB_VALUE(WGL_ACCUM_GREEN_BITS_ARB);
-            u->accumBlueBits = FIND_ATTRIB_VALUE(WGL_ACCUM_BLUE_BITS_ARB);
-            u->accumAlphaBits = FIND_ATTRIB_VALUE(WGL_ACCUM_ALPHA_BITS_ARB);
+            current.depthBits = FIND_ATTRIB_VALUE(WGL_DEPTH_BITS_ARB);
+            current.stencilBits = FIND_ATTRIB_VALUE(WGL_STENCIL_BITS_ARB);
 
-            u->auxBuffers = FIND_ATTRIB_VALUE(WGL_AUX_BUFFERS_ARB);
+            current.accumRedBits = FIND_ATTRIB_VALUE(WGL_ACCUM_RED_BITS_ARB);
+            current.accumGreenBits = FIND_ATTRIB_VALUE(WGL_ACCUM_GREEN_BITS_ARB);
+            current.accumBlueBits = FIND_ATTRIB_VALUE(WGL_ACCUM_BLUE_BITS_ARB);
+            current.accumAlphaBits = FIND_ATTRIB_VALUE(WGL_ACCUM_ALPHA_BITS_ARB);
 
-            if (FIND_ATTRIB_VALUE(WGL_STEREO_ARB))
-                u->stereo = GLFW_TRUE;
+            current.auxBuffers = FIND_ATTRIB_VALUE(WGL_AUX_BUFFERS_ARB);
 
             if (_glfw.wgl.ARB_multisample)
-                u->samples = FIND_ATTRIB_VALUE(WGL_SAMPLES_ARB);
+                current.samples = FIND_ATTRIB_VALUE(WGL_SAMPLES_ARB);
 
             if (ctxconfig->client == GLFW_OPENGL_API)
             {
@@ -184,7 +183,7 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
                     _glfw.wgl.EXT_framebuffer_sRGB)
                 {
                     if (FIND_ATTRIB_VALUE(WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB))
-                        u->sRGB = GLFW_TRUE;
+                        current.sRGB = GLFW_TRUE;
                 }
             }
             else
@@ -192,7 +191,7 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
                 if (_glfw.wgl.EXT_colorspace)
                 {
                     if (FIND_ATTRIB_VALUE(WGL_COLORSPACE_EXT) == WGL_COLORSPACE_SRGB_EXT)
-                        u->sRGB = GLFW_TRUE;
+                        current.sRGB = GLFW_TRUE;
                 }
             }
         }
@@ -209,8 +208,6 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
             {
                 _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
                                     "WGL: Failed to describe pixel format");
-
-                _glfw_free(usableConfigs);
                 return 0;
             }
 
@@ -220,64 +217,62 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
                 continue;
             }
 
+            if (pfd.iPixelType != PFD_TYPE_RGBA)
+                continue;
+
             if (!(pfd.dwFlags & PFD_GENERIC_ACCELERATED) &&
                 (pfd.dwFlags & PFD_GENERIC_FORMAT))
             {
                 continue;
             }
 
-            if (pfd.iPixelType != PFD_TYPE_RGBA)
-                continue;
+            accelerationAvailable = GLFW_TRUE;
 
             if (!!(pfd.dwFlags & PFD_DOUBLEBUFFER) != fbconfig->doublebuffer)
                 continue;
 
-            u->redBits = pfd.cRedBits;
-            u->greenBits = pfd.cGreenBits;
-            u->blueBits = pfd.cBlueBits;
-            u->alphaBits = pfd.cAlphaBits;
+            if (!(pfd.dwFlags & PFD_STEREO) && fbconfig->stereo)
+                continue;
 
-            u->depthBits = pfd.cDepthBits;
-            u->stencilBits = pfd.cStencilBits;
+            current.redBits = pfd.cRedBits;
+            current.greenBits = pfd.cGreenBits;
+            current.blueBits = pfd.cBlueBits;
+            current.alphaBits = pfd.cAlphaBits;
 
-            u->accumRedBits = pfd.cAccumRedBits;
-            u->accumGreenBits = pfd.cAccumGreenBits;
-            u->accumBlueBits = pfd.cAccumBlueBits;
-            u->accumAlphaBits = pfd.cAccumAlphaBits;
+            current.depthBits = pfd.cDepthBits;
+            current.stencilBits = pfd.cStencilBits;
 
-            u->auxBuffers = pfd.cAuxBuffers;
+            current.accumRedBits = pfd.cAccumRedBits;
+            current.accumGreenBits = pfd.cAccumGreenBits;
+            current.accumBlueBits = pfd.cAccumBlueBits;
+            current.accumAlphaBits = pfd.cAccumAlphaBits;
 
-            if (pfd.dwFlags & PFD_STEREO)
-                u->stereo = GLFW_TRUE;
+            current.auxBuffers = pfd.cAuxBuffers;
         }
 
-        u->handle = pixelFormat;
-        usableCount++;
+        configDiff = _glfwCompareFBConfigs(fbconfig, &current);
+        if (configDiff < closestConfigDiff)
+        {
+            closestPixelFormat = pixelFormat;
+            closestConfigDiff = configDiff;
+        }
     }
 
-    if (!usableCount)
+    if (!accelerationAvailable)
     {
         _glfwInputError(GLFW_API_UNAVAILABLE,
                         "WGL: The driver does not appear to support OpenGL");
-
-        _glfw_free(usableConfigs);
         return 0;
     }
 
-    closest = _glfwChooseFBConfig(fbconfig, usableConfigs, usableCount);
-    if (!closest)
+    if (!closestPixelFormat)
     {
         _glfwInputError(GLFW_FORMAT_UNAVAILABLE,
                         "WGL: Failed to find a suitable pixel format");
-
-        _glfw_free(usableConfigs);
         return 0;
     }
 
-    pixelFormat = (int) closest->handle;
-    _glfw_free(usableConfigs);
-
-    return pixelFormat;
+    return closestPixelFormat;
 }
 
 #undef ADD_ATTRIB

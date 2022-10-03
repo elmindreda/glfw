@@ -91,10 +91,10 @@ static GLFWbool chooseEGLConfig(const _GLFWctxconfig* ctxconfig,
                                 const _GLFWfbconfig* fbconfig,
                                 EGLConfig* result)
 {
-    EGLConfig* nativeConfigs;
-    _GLFWfbconfig* usableConfigs;
-    const _GLFWfbconfig* closest;
-    int i, nativeCount, usableCount, apiBit;
+    EGLConfig* configs;
+    int i, configCount, apiBit;
+    EGLConfig* closestConfig = NULL;
+    uint32_t closestConfigDiff = UINT32_MAX;
     GLFWbool wrongApiAvailable = GLFW_FALSE;
 
     if (ctxconfig->client == GLFW_OPENGL_ES_API)
@@ -113,30 +113,27 @@ static GLFWbool chooseEGLConfig(const _GLFWctxconfig* ctxconfig,
         return GLFW_FALSE;
     }
 
-    eglGetConfigs(_glfw.egl.display, NULL, 0, &nativeCount);
-    if (!nativeCount)
+    eglGetConfigs(_glfw.egl.display, NULL, 0, &configCount);
+    if (!configCount)
     {
         _glfwInputError(GLFW_API_UNAVAILABLE, "EGL: No EGLConfigs returned");
         return GLFW_FALSE;
     }
 
-    nativeConfigs = _glfw_calloc(nativeCount, sizeof(EGLConfig));
-    eglGetConfigs(_glfw.egl.display, nativeConfigs, nativeCount, &nativeCount);
+    configs = _glfw_calloc(configCount, sizeof(EGLConfig));
+    eglGetConfigs(_glfw.egl.display, configs, configCount, &configCount);
 
-    usableConfigs = _glfw_calloc(nativeCount, sizeof(_GLFWfbconfig));
-    usableCount = 0;
-
-    for (i = 0;  i < nativeCount;  i++)
+    for (i = 0;  i < configCount;  i++)
     {
-        const EGLConfig n = nativeConfigs[i];
-        _GLFWfbconfig* u = usableConfigs + usableCount;
+        _GLFWfbconfig current = {0};
+        uint32_t currentDiff;
 
         // Only consider RGB(A) EGLConfigs
-        if (getEGLConfigAttrib(n, EGL_COLOR_BUFFER_TYPE) != EGL_RGB_BUFFER)
+        if (getEGLConfigAttrib(configs[i], EGL_COLOR_BUFFER_TYPE) != EGL_RGB_BUFFER)
             continue;
 
         // Only consider window EGLConfigs
-        if (!(getEGLConfigAttrib(n, EGL_SURFACE_TYPE) & EGL_WINDOW_BIT))
+        if (!(getEGLConfigAttrib(configs[i], EGL_SURFACE_TYPE) & EGL_WINDOW_BIT))
             continue;
 
 #if defined(_GLFW_X11)
@@ -145,7 +142,7 @@ static GLFWbool chooseEGLConfig(const _GLFWctxconfig* ctxconfig,
             XVisualInfo vi = {0};
 
             // Only consider EGLConfigs with associated Visuals
-            vi.visualid = getEGLConfigAttrib(n, EGL_NATIVE_VISUAL_ID);
+            vi.visualid = getEGLConfigAttrib(configs[i], EGL_NATIVE_VISUAL_ID);
             if (!vi.visualid)
                 continue;
 
@@ -156,26 +153,26 @@ static GLFWbool chooseEGLConfig(const _GLFWctxconfig* ctxconfig,
                     XGetVisualInfo(_glfw.x11.display, VisualIDMask, &vi, &count);
                 if (vis)
                 {
-                    u->transparent = _glfwIsVisualTransparentX11(vis[0].visual);
+                    current.transparent = _glfwIsVisualTransparentX11(vis[0].visual);
                     XFree(vis);
                 }
             }
         }
 #endif // _GLFW_X11
 
-        if (!(getEGLConfigAttrib(n, EGL_RENDERABLE_TYPE) & apiBit))
+        if (!(getEGLConfigAttrib(configs[i], EGL_RENDERABLE_TYPE) & apiBit))
         {
             wrongApiAvailable = GLFW_TRUE;
             continue;
         }
 
-        u->redBits = getEGLConfigAttrib(n, EGL_RED_SIZE);
-        u->greenBits = getEGLConfigAttrib(n, EGL_GREEN_SIZE);
-        u->blueBits = getEGLConfigAttrib(n, EGL_BLUE_SIZE);
+        current.redBits = getEGLConfigAttrib(configs[i], EGL_RED_SIZE);
+        current.greenBits = getEGLConfigAttrib(configs[i], EGL_GREEN_SIZE);
+        current.blueBits = getEGLConfigAttrib(configs[i], EGL_BLUE_SIZE);
 
-        u->alphaBits = getEGLConfigAttrib(n, EGL_ALPHA_SIZE);
-        u->depthBits = getEGLConfigAttrib(n, EGL_DEPTH_SIZE);
-        u->stencilBits = getEGLConfigAttrib(n, EGL_STENCIL_SIZE);
+        current.alphaBits = getEGLConfigAttrib(configs[i], EGL_ALPHA_SIZE);
+        current.depthBits = getEGLConfigAttrib(configs[i], EGL_DEPTH_SIZE);
+        current.stencilBits = getEGLConfigAttrib(configs[i], EGL_STENCIL_SIZE);
 
 #if defined(_GLFW_WAYLAND)
         if (_glfw.platform.platformID == GLFW_PLATFORM_WAYLAND)
@@ -186,22 +183,25 @@ static GLFWbool chooseEGLConfig(const _GLFWctxconfig* ctxconfig,
             //       with an alpha channel to ensure the buffer is opaque
             if (!_glfw.egl.EXT_present_opaque)
             {
-                if (!fbconfig->transparent && u->alphaBits > 0)
+                if (!fbconfig->transparent && current.alphaBits > 0)
                     continue;
             }
         }
 #endif // _GLFW_WAYLAND
 
-        u->samples = getEGLConfigAttrib(n, EGL_SAMPLES);
-        u->doublebuffer = fbconfig->doublebuffer;
+        current.samples = getEGLConfigAttrib(configs[i], EGL_SAMPLES);
+        current.doublebuffer = fbconfig->doublebuffer;
 
-        u->handle = (uintptr_t) n;
-        usableCount++;
+        currentDiff = _glfwCompareFBConfigs(fbconfig, &current);
+        if (currentDiff < closestConfigDiff)
+        {
+            closestConfig = &configs[i];
+            closestConfigDiff = currentDiff;
+        }
     }
 
-    closest = _glfwChooseFBConfig(fbconfig, usableConfigs, usableCount);
-    if (closest)
-        *result = (EGLConfig) closest->handle;
+    if (closestConfig)
+        *result = *closestConfig;
     else
     {
         if (wrongApiAvailable)
@@ -232,10 +232,8 @@ static GLFWbool chooseEGLConfig(const _GLFWctxconfig* ctxconfig,
         }
     }
 
-    _glfw_free(nativeConfigs);
-    _glfw_free(usableConfigs);
-
-    return closest != NULL;
+    _glfw_free(configs);
+    return closestConfig != NULL;
 }
 
 static void makeContextCurrentEGL(_GLFWwindow* window)
