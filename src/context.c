@@ -186,6 +186,12 @@ uint32_t _glfwCompareFBConfigs(const _GLFWfbconfig* desired, const _GLFWfbconfig
 {
     unsigned int missing = 0, colorDiff = 0, extraDiff = 0;
 
+    if (desired->doublebuffer != actual->doublebuffer)
+        return UINT32_MAX;
+
+    if (desired->stereo && !actual->stereo)
+        return UINT32_MAX;
+
     // Count number of missing buffers
     {
         if (desired->alphaBits > 0 && actual->alphaBits == 0)

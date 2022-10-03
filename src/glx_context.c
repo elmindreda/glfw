@@ -88,9 +88,6 @@ static GLFWbool chooseGLXFBConfig(const _GLFWfbconfig* fbconfig, GLXFBConfig* re
                 continue;
         }
 
-        if (getGLXFBConfigAttrib(configs[i], GLX_DOUBLEBUFFER) != fbconfig->doublebuffer)
-            continue;
-
         if (fbconfig->transparent)
         {
             XVisualInfo* vi = glXGetVisualFromFBConfig(_glfw.x11.display, configs[i]);
@@ -115,9 +112,8 @@ static GLFWbool chooseGLXFBConfig(const _GLFWfbconfig* fbconfig, GLXFBConfig* re
         current.accumAlphaBits = getGLXFBConfigAttrib(configs[i], GLX_ACCUM_ALPHA_SIZE);
 
         current.auxBuffers = getGLXFBConfigAttrib(configs[i], GLX_AUX_BUFFERS);
-
-        if (getGLXFBConfigAttrib(configs[i], GLX_STEREO))
-            current.stereo = GLFW_TRUE;
+        current.doublebuffer = getGLXFBConfigAttrib(configs[i], GLX_DOUBLEBUFFER);
+        current.stereo = getGLXFBConfigAttrib(configs[i], GLX_STEREO);
 
         if (_glfw.glx.ARB_multisample)
             current.samples = getGLXFBConfigAttrib(configs[i], GLX_SAMPLES);

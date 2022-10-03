@@ -153,12 +153,6 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
 
             accelerationAvailable = GLFW_TRUE;
 
-            if (FIND_ATTRIB_VALUE(WGL_DOUBLE_BUFFER_ARB) != fbconfig->doublebuffer)
-                continue;
-
-            if (!FIND_ATTRIB_VALUE(WGL_STEREO_ARB) && fbconfig->stereo)
-                continue;
-
             current.redBits = FIND_ATTRIB_VALUE(WGL_RED_BITS_ARB);
             current.greenBits = FIND_ATTRIB_VALUE(WGL_GREEN_BITS_ARB);
             current.blueBits = FIND_ATTRIB_VALUE(WGL_BLUE_BITS_ARB);
@@ -173,6 +167,8 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
             current.accumAlphaBits = FIND_ATTRIB_VALUE(WGL_ACCUM_ALPHA_BITS_ARB);
 
             current.auxBuffers = FIND_ATTRIB_VALUE(WGL_AUX_BUFFERS_ARB);
+            current.doublebuffer = FIND_ATTRIB_VALUE(WGL_DOUBLE_BUFFER_ARB);
+            current.stereo = FIND_ATTRIB_VALUE(WGL_STEREO_ARB);
 
             if (_glfw.wgl.ARB_multisample)
                 current.samples = FIND_ATTRIB_VALUE(WGL_SAMPLES_ARB);
@@ -228,12 +224,6 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
 
             accelerationAvailable = GLFW_TRUE;
 
-            if (!!(pfd.dwFlags & PFD_DOUBLEBUFFER) != fbconfig->doublebuffer)
-                continue;
-
-            if (!(pfd.dwFlags & PFD_STEREO) && fbconfig->stereo)
-                continue;
-
             current.redBits = pfd.cRedBits;
             current.greenBits = pfd.cGreenBits;
             current.blueBits = pfd.cBlueBits;
@@ -248,6 +238,11 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
             current.accumAlphaBits = pfd.cAccumAlphaBits;
 
             current.auxBuffers = pfd.cAuxBuffers;
+
+            if (pfd.dwFlags & PFD_DOUBLEBUFFER)
+                current.doublebuffer = GLFW_TRUE;
+            if (pfd.dwFlags & PFD_STEREO)
+                current.stereo = GLFW_TRUE;
         }
 
         configDiff = _glfwCompareFBConfigs(fbconfig, &current);
