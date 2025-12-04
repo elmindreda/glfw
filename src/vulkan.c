@@ -46,7 +46,7 @@ GLFWbool _glfwInitVulkan(int mode)
     PFN_vkEnumerateInstanceExtensionProperties vkEnumerateInstanceExtensionProperties;
     uint32_t i, count;
 
-    if (_glfw.vk.available)
+    if (_glfw.vk.initialized)
         return GLFW_TRUE;
 
     if (_glfw.hints.init.vulkanLoader)
@@ -148,7 +148,7 @@ GLFWbool _glfwInitVulkan(int mode)
 
     _glfw_free(ep);
 
-    _glfw.vk.available = GLFW_TRUE;
+    _glfw.vk.initialized = GLFW_TRUE;
 
     _glfw.platform.getRequiredInstanceExtensions(_glfw.vk.extensions);
 

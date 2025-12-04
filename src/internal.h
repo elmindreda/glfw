@@ -860,7 +860,7 @@ struct _GLFWlibrary
     } osmesa;
 
     struct {
-        GLFWbool        available;
+        GLFWbool        initialized;
         void*           module;
         char*           extensions[2];
         PFN_vkGetInstanceProcAddr GetInstanceProcAddr;
