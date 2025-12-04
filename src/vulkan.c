@@ -54,19 +54,19 @@ GLFWbool _glfwInitVulkan(int mode)
     else
     {
 #if defined(_GLFW_VULKAN_LIBRARY)
-        _glfw.vk.handle = _glfwPlatformLoadModule(_GLFW_VULKAN_LIBRARY);
+        _glfw.vk.module = _glfwPlatformLoadModule(_GLFW_VULKAN_LIBRARY);
 #elif defined(_GLFW_WIN32)
-        _glfw.vk.handle = _glfwPlatformLoadModule("vulkan-1.dll");
+        _glfw.vk.module = _glfwPlatformLoadModule("vulkan-1.dll");
 #elif defined(_GLFW_COCOA)
-        _glfw.vk.handle = _glfwPlatformLoadModule("libvulkan.1.dylib");
-        if (!_glfw.vk.handle)
-            _glfw.vk.handle = _glfwLoadLocalVulkanLoaderCocoa();
+        _glfw.vk.module = _glfwPlatformLoadModule("libvulkan.1.dylib");
+        if (!_glfw.vk.module)
+            _glfw.vk.module = _glfwLoadLocalVulkanLoaderCocoa();
 #elif defined(__OpenBSD__) || defined(__NetBSD__)
-        _glfw.vk.handle = _glfwPlatformLoadModule("libvulkan.so");
+        _glfw.vk.module = _glfwPlatformLoadModule("libvulkan.so");
 #else
-        _glfw.vk.handle = _glfwPlatformLoadModule("libvulkan.so.1");
+        _glfw.vk.module = _glfwPlatformLoadModule("libvulkan.so.1");
 #endif
-        if (!_glfw.vk.handle)
+        if (!_glfw.vk.module)
         {
             if (mode == _GLFW_REQUIRE_LOADER)
                 _glfwInputError(GLFW_API_UNAVAILABLE, "Vulkan: Loader not found");
@@ -75,7 +75,7 @@ GLFWbool _glfwInitVulkan(int mode)
         }
 
         _glfw.vk.GetInstanceProcAddr = (PFN_vkGetInstanceProcAddr)
-            _glfwPlatformGetModuleSymbol(_glfw.vk.handle, "vkGetInstanceProcAddr");
+            _glfwPlatformGetModuleSymbol(_glfw.vk.module, "vkGetInstanceProcAddr");
         if (!_glfw.vk.GetInstanceProcAddr)
         {
             _glfwInputError(GLFW_API_UNAVAILABLE,
@@ -157,8 +157,8 @@ GLFWbool _glfwInitVulkan(int mode)
 
 void _glfwTerminateVulkan(void)
 {
-    if (_glfw.vk.handle)
-        _glfwPlatformFreeModule(_glfw.vk.handle);
+    if (_glfw.vk.module)
+        _glfwPlatformFreeModule(_glfw.vk.module);
 }
 
 const char* _glfwGetVulkanResultString(VkResult result)
@@ -263,8 +263,8 @@ GLFWAPI GLFWvkproc glfwGetInstanceProcAddress(VkInstance instance,
     proc = (GLFWvkproc) vkGetInstanceProcAddr(instance, procname);
     if (!proc)
     {
-        if (_glfw.vk.handle)
-            proc = (GLFWvkproc) _glfwPlatformGetModuleSymbol(_glfw.vk.handle, procname);
+        if (_glfw.vk.module)
+            proc = (GLFWvkproc) _glfwPlatformGetModuleSymbol(_glfw.vk.module, procname);
     }
 
     return proc;

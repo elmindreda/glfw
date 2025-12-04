@@ -481,7 +481,7 @@ typedef struct _GLFWlibraryGLX
     int             eventBase;
     int             errorBase;
 
-    void*           handle;
+    void*           module;
 
     // GLX 1.3 functions
     PFNGLXGETFBCONFIGSPROC              GetFBConfigs;
@@ -644,7 +644,7 @@ typedef struct _GLFWlibraryX11
     Atom            GLFW_SELECTION;
 
     struct {
-        void*       handle;
+        void*       module;
         GLFWbool    utf8;
         PFN_XAllocClassHint AllocClassHint;
         PFN_XAllocSizeHints AllocSizeHints;
@@ -743,7 +743,7 @@ typedef struct _GLFWlibraryX11
 
     struct {
         GLFWbool    available;
-        void*       handle;
+        void*       module;
         int         eventBase;
         int         errorBase;
         int         major;
@@ -804,7 +804,7 @@ typedef struct _GLFWlibraryX11
     } xdnd;
 
     struct {
-        void*       handle;
+        void*       module;
         PFN_XcursorImageCreate ImageCreate;
         PFN_XcursorImageDestroy ImageDestroy;
         PFN_XcursorImageLoadCursor ImageLoadCursor;
@@ -815,7 +815,7 @@ typedef struct _GLFWlibraryX11
 
     struct {
         GLFWbool    available;
-        void*       handle;
+        void*       module;
         int         major;
         int         minor;
         PFN_XineramaIsActive IsActive;
@@ -824,13 +824,13 @@ typedef struct _GLFWlibraryX11
     } xinerama;
 
     struct {
-        void*       handle;
+        void*       module;
         PFN_XGetXCBConnection GetXCBConnection;
     } x11xcb;
 
     struct {
         GLFWbool    available;
-        void*       handle;
+        void*       module;
         int         eventBase;
         int         errorBase;
         PFN_XF86VidModeQueryExtension QueryExtension;
@@ -841,7 +841,7 @@ typedef struct _GLFWlibraryX11
 
     struct {
         GLFWbool    available;
-        void*       handle;
+        void*       module;
         int         majorOpcode;
         int         eventBase;
         int         errorBase;
@@ -853,7 +853,7 @@ typedef struct _GLFWlibraryX11
 
     struct {
         GLFWbool    available;
-        void*       handle;
+        void*       module;
         int         major;
         int         minor;
         int         eventBase;
@@ -865,7 +865,7 @@ typedef struct _GLFWlibraryX11
 
     struct {
         GLFWbool    available;
-        void*       handle;
+        void*       module;
         int         major;
         int         minor;
         int         eventBase;

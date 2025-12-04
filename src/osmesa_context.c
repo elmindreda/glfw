@@ -130,36 +130,36 @@ GLFWbool _glfwInitOSMesa(void)
         NULL
     };
 
-    if (_glfw.osmesa.handle)
+    if (_glfw.osmesa.module)
         return GLFW_TRUE;
 
     for (i = 0;  sonames[i];  i++)
     {
-        _glfw.osmesa.handle = _glfwPlatformLoadModule(sonames[i]);
-        if (_glfw.osmesa.handle)
+        _glfw.osmesa.module = _glfwPlatformLoadModule(sonames[i]);
+        if (_glfw.osmesa.module)
             break;
     }
 
-    if (!_glfw.osmesa.handle)
+    if (!_glfw.osmesa.module)
     {
         _glfwInputError(GLFW_API_UNAVAILABLE, "OSMesa: Library not found");
         return GLFW_FALSE;
     }
 
     _glfw.osmesa.CreateContextExt = (PFN_OSMesaCreateContextExt)
-        _glfwPlatformGetModuleSymbol(_glfw.osmesa.handle, "OSMesaCreateContextExt");
+        _glfwPlatformGetModuleSymbol(_glfw.osmesa.module, "OSMesaCreateContextExt");
     _glfw.osmesa.CreateContextAttribs = (PFN_OSMesaCreateContextAttribs)
-        _glfwPlatformGetModuleSymbol(_glfw.osmesa.handle, "OSMesaCreateContextAttribs");
+        _glfwPlatformGetModuleSymbol(_glfw.osmesa.module, "OSMesaCreateContextAttribs");
     _glfw.osmesa.DestroyContext = (PFN_OSMesaDestroyContext)
-        _glfwPlatformGetModuleSymbol(_glfw.osmesa.handle, "OSMesaDestroyContext");
+        _glfwPlatformGetModuleSymbol(_glfw.osmesa.module, "OSMesaDestroyContext");
     _glfw.osmesa.MakeCurrent = (PFN_OSMesaMakeCurrent)
-        _glfwPlatformGetModuleSymbol(_glfw.osmesa.handle, "OSMesaMakeCurrent");
+        _glfwPlatformGetModuleSymbol(_glfw.osmesa.module, "OSMesaMakeCurrent");
     _glfw.osmesa.GetColorBuffer = (PFN_OSMesaGetColorBuffer)
-        _glfwPlatformGetModuleSymbol(_glfw.osmesa.handle, "OSMesaGetColorBuffer");
+        _glfwPlatformGetModuleSymbol(_glfw.osmesa.module, "OSMesaGetColorBuffer");
     _glfw.osmesa.GetDepthBuffer = (PFN_OSMesaGetDepthBuffer)
-        _glfwPlatformGetModuleSymbol(_glfw.osmesa.handle, "OSMesaGetDepthBuffer");
+        _glfwPlatformGetModuleSymbol(_glfw.osmesa.module, "OSMesaGetDepthBuffer");
     _glfw.osmesa.GetProcAddress = (PFN_OSMesaGetProcAddress)
-        _glfwPlatformGetModuleSymbol(_glfw.osmesa.handle, "OSMesaGetProcAddress");
+        _glfwPlatformGetModuleSymbol(_glfw.osmesa.module, "OSMesaGetProcAddress");
 
     if (!_glfw.osmesa.CreateContextExt ||
         !_glfw.osmesa.DestroyContext ||
@@ -180,10 +180,10 @@ GLFWbool _glfwInitOSMesa(void)
 
 void _glfwTerminateOSMesa(void)
 {
-    if (_glfw.osmesa.handle)
+    if (_glfw.osmesa.module)
     {
-        _glfwPlatformFreeModule(_glfw.osmesa.handle);
-        _glfw.osmesa.handle = NULL;
+        _glfwPlatformFreeModule(_glfw.osmesa.module);
+        _glfw.osmesa.module = NULL;
     }
 }
 

@@ -510,7 +510,7 @@ struct _GLFWcontext
         EGLConfig       config;
         EGLContext      handle;
         EGLSurface      surface;
-        void*           client;
+        void*           clientModule;
     } egl;
 
     struct {
@@ -822,7 +822,7 @@ struct _GLFWlibrary
         GLFWbool        ANGLE_platform_angle_metal;
         GLFWbool        MESA_platform_surfaceless;
 
-        void*           handle;
+        void*           module;
 
         PFN_eglGetConfigAttrib      GetConfigAttrib;
         PFN_eglGetConfigs           GetConfigs;
@@ -847,7 +847,7 @@ struct _GLFWlibrary
     } egl;
 
     struct {
-        void*           handle;
+        void*           module;
 
         PFN_OSMesaCreateContextExt      CreateContextExt;
         PFN_OSMesaCreateContextAttribs  CreateContextAttribs;
@@ -861,7 +861,7 @@ struct _GLFWlibrary
 
     struct {
         GLFWbool        available;
-        void*           handle;
+        void*           module;
         char*           extensions[2];
         PFN_vkGetInstanceProcAddr GetInstanceProcAddr;
         GLFWbool        KHR_surface;

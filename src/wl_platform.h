@@ -475,7 +475,7 @@ typedef struct _GLFWlibraryWayland
     char                        keynames[GLFW_KEY_LAST + 1][5];
 
     struct {
-        void*                   handle;
+        void*                   module;
         struct xkb_context*     context;
         struct xkb_keymap*      keymap;
         struct xkb_state*       state;
@@ -519,7 +519,7 @@ typedef struct _GLFWlibraryWayland
     _GLFWwindow*                keyboardFocus;
 
     struct {
-        void*                                       handle;
+        void*                                       module;
         PFN_wl_display_flush                        display_flush;
         PFN_wl_display_cancel_read                  display_cancel_read;
         PFN_wl_display_dispatch_pending             display_dispatch_pending;
@@ -542,7 +542,7 @@ typedef struct _GLFWlibraryWayland
     } client;
 
     struct {
-        void*                   handle;
+        void*                   module;
 
         PFN_wl_cursor_theme_load theme_load;
         PFN_wl_cursor_theme_destroy theme_destroy;
@@ -551,7 +551,7 @@ typedef struct _GLFWlibraryWayland
     } cursor;
 
     struct {
-        void*                   handle;
+        void*                   module;
 
         PFN_wl_egl_window_create window_create;
         PFN_wl_egl_window_destroy window_destroy;
@@ -559,7 +559,7 @@ typedef struct _GLFWlibraryWayland
     } egl;
 
     struct {
-        void*                   handle;
+        void*                   module;
         struct libdecor*        context;
         struct wl_callback*     callback;
         GLFWbool                ready;

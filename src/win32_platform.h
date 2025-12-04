@@ -322,7 +322,7 @@ typedef struct _GLFWcontextWGL
 //
 typedef struct _GLFWlibraryWGL
 {
-    HINSTANCE                           instance;
+    void*                               module;
     PFN_wglCreateContext                CreateContext;
     PFN_wglDeleteContext                DeleteContext;
     PFN_wglGetProcAddress               GetProcAddress;
@@ -404,19 +404,19 @@ typedef struct _GLFWlibraryWin32
     HCURSOR             blankCursor;
 
     struct {
-        HINSTANCE                       instance;
+        void*                           module;
         PFN_DirectInput8Create          Create;
         IDirectInput8W*                 api;
     } dinput8;
 
     struct {
-        HINSTANCE                       instance;
+        void*                           module;
         PFN_XInputGetCapabilities       GetCapabilities;
         PFN_XInputGetState              GetState;
     } xinput;
 
     struct {
-        HINSTANCE                       instance;
+        void*                           module;
         PFN_EnableNonClientDpiScaling   EnableNonClientDpiScaling_;
         PFN_SetProcessDpiAwarenessContext SetProcessDpiAwarenessContext_;
         PFN_GetDpiForWindow             GetDpiForWindow_;
@@ -425,7 +425,7 @@ typedef struct _GLFWlibraryWin32
     } user32;
 
     struct {
-        HINSTANCE                       instance;
+        void*                           module;
         PFN_DwmIsCompositionEnabled     IsCompositionEnabled;
         PFN_DwmFlush                    Flush;
         PFN_DwmEnableBlurBehindWindow   EnableBlurBehindWindow;
@@ -433,13 +433,13 @@ typedef struct _GLFWlibraryWin32
     } dwmapi;
 
     struct {
-        HINSTANCE                       instance;
+        void*                           module;
         PFN_SetProcessDpiAwareness      SetProcessDpiAwareness_;
         PFN_GetDpiForMonitor            GetDpiForMonitor_;
     } shcore;
 
     struct {
-        HINSTANCE                       instance;
+        void*                           module;
         PFN_RtlVerifyVersionInfo        RtlVerifyVersionInfo_;
     } ntdll;
 } _GLFWlibraryWin32;

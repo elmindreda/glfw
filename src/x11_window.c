@@ -2956,7 +2956,7 @@ GLFWbool _glfwCreateCursorX11(_GLFWcursor* cursor,
 
 GLFWbool _glfwCreateStandardCursorX11(_GLFWcursor* cursor, int shape)
 {
-    if (_glfw.x11.xcursor.handle)
+    if (_glfw.x11.xcursor.module)
     {
         char* theme = XcursorGetTheme(_glfw.x11.display);
         if (theme)
@@ -3146,7 +3146,7 @@ void _glfwGetRequiredInstanceExtensionsX11(char** extensions)
     if (!_glfw.vk.KHR_surface)
         return;
 
-    if (!_glfw.vk.KHR_xcb_surface || !_glfw.x11.x11xcb.handle)
+    if (!_glfw.vk.KHR_xcb_surface || !_glfw.x11.x11xcb.module)
     {
         if (!_glfw.vk.KHR_xlib_surface)
             return;
@@ -3156,7 +3156,7 @@ void _glfwGetRequiredInstanceExtensionsX11(char** extensions)
 
     // NOTE: VK_KHR_xcb_surface is preferred due to some early ICDs exposing but
     //       not correctly implementing VK_KHR_xlib_surface
-    if (_glfw.vk.KHR_xcb_surface && _glfw.x11.x11xcb.handle)
+    if (_glfw.vk.KHR_xcb_surface && _glfw.x11.x11xcb.module)
         extensions[1] = "VK_KHR_xcb_surface";
     else
         extensions[1] = "VK_KHR_xlib_surface";
@@ -3169,7 +3169,7 @@ GLFWbool _glfwGetPhysicalDevicePresentationSupportX11(VkInstance instance,
     VisualID visualID = XVisualIDFromVisual(DefaultVisual(_glfw.x11.display,
                                                           _glfw.x11.screen));
 
-    if (_glfw.vk.KHR_xcb_surface && _glfw.x11.x11xcb.handle)
+    if (_glfw.vk.KHR_xcb_surface && _glfw.x11.x11xcb.module)
     {
         PFN_vkGetPhysicalDeviceXcbPresentationSupportKHR
             vkGetPhysicalDeviceXcbPresentationSupportKHR =
@@ -3220,7 +3220,7 @@ VkResult _glfwCreateWindowSurfaceX11(VkInstance instance,
                                      const VkAllocationCallbacks* allocator,
                                      VkSurfaceKHR* surface)
 {
-    if (_glfw.vk.KHR_xcb_surface && _glfw.x11.x11xcb.handle)
+    if (_glfw.vk.KHR_xcb_surface && _glfw.x11.x11xcb.module)
     {
         VkResult err;
         VkXcbSurfaceCreateInfoKHR sci;
