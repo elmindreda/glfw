@@ -1592,67 +1592,24 @@ void _glfwTerminateX11(void)
         _glfw.x11.display = NULL;
     }
 
-    if (_glfw.x11.x11xcb.module)
-    {
-        _glfwPlatformFreeModule(_glfw.x11.x11xcb.module);
-        _glfw.x11.x11xcb.module = NULL;
-    }
-
-    if (_glfw.x11.xcursor.module)
-    {
-        _glfwPlatformFreeModule(_glfw.x11.xcursor.module);
-        _glfw.x11.xcursor.module = NULL;
-    }
-
-    if (_glfw.x11.randr.module)
-    {
-        _glfwPlatformFreeModule(_glfw.x11.randr.module);
-        _glfw.x11.randr.module = NULL;
-    }
-
-    if (_glfw.x11.xinerama.module)
-    {
-        _glfwPlatformFreeModule(_glfw.x11.xinerama.module);
-        _glfw.x11.xinerama.module = NULL;
-    }
-
-    if (_glfw.x11.xrender.module)
-    {
-        _glfwPlatformFreeModule(_glfw.x11.xrender.module);
-        _glfw.x11.xrender.module = NULL;
-    }
-
-    if (_glfw.x11.vidmode.module)
-    {
-        _glfwPlatformFreeModule(_glfw.x11.vidmode.module);
-        _glfw.x11.vidmode.module = NULL;
-    }
-
-    if (_glfw.x11.xi.module)
-    {
-        _glfwPlatformFreeModule(_glfw.x11.xi.module);
-        _glfw.x11.xi.module = NULL;
-    }
-
-    // NOTE: GLX and EGL need to be unloaded after XCloseDisplay, as they register
-    //       cleanup callbacks that get called by that function
-    if (_glfw.glx.module)
-    {
-        _glfwPlatformFreeModule(_glfw.glx.module);
-        _glfw.glx.module = NULL;
-    }
-
-    if (_glfw.x11.xlib.module)
-    {
-        _glfwPlatformFreeModule(_glfw.x11.xlib.module);
-        _glfw.x11.xlib.module = NULL;
-    }
-
     if (_glfw.x11.emptyEventPipe[0] || _glfw.x11.emptyEventPipe[1])
     {
         close(_glfw.x11.emptyEventPipe[0]);
         close(_glfw.x11.emptyEventPipe[1]);
     }
+
+    // NOTE: GLX and EGL need to be unloaded after XCloseDisplay, as they register
+    //       cleanup callbacks that get called by that function
+
+    _glfwPlatformFreeModule(_glfw.x11.x11xcb.module);
+    _glfwPlatformFreeModule(_glfw.x11.xcursor.module);
+    _glfwPlatformFreeModule(_glfw.x11.randr.module);
+    _glfwPlatformFreeModule(_glfw.x11.xinerama.module);
+    _glfwPlatformFreeModule(_glfw.x11.xrender.module);
+    _glfwPlatformFreeModule(_glfw.x11.vidmode.module);
+    _glfwPlatformFreeModule(_glfw.x11.xi.module);
+    _glfwPlatformFreeModule(_glfw.glx.module);
+    _glfwPlatformFreeModule(_glfw.x11.xlib.module);
 }
 
 #endif // _GLFW_X11

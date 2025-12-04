@@ -976,33 +976,14 @@ void _glfwTerminateWayland(void)
     if (_glfw.wl.cursorTimerfd >= 0)
         close(_glfw.wl.cursorTimerfd);
 
+    _glfw_free(_glfw.wl.clipboardString);
+
     // Free modules only after all Wayland termination functions are called
 
-    if (_glfw.wl.libdecor.module)
-    {
-        _glfwPlatformFreeModule(_glfw.wl.libdecor.module);
-        _glfw.wl.libdecor.module = NULL;
-    }
-
-    if (_glfw.wl.egl.module)
-    {
-        _glfwPlatformFreeModule(_glfw.wl.egl.module);
-        _glfw.wl.egl.module = NULL;
-    }
-
-    if (_glfw.wl.xkb.module)
-    {
-        _glfwPlatformFreeModule(_glfw.wl.xkb.module);
-        _glfw.wl.xkb.module = NULL;
-    }
-
-    if (_glfw.wl.cursor.module)
-    {
-        _glfwPlatformFreeModule(_glfw.wl.cursor.module);
-        _glfw.wl.cursor.module = NULL;
-    }
-
-    _glfw_free(_glfw.wl.clipboardString);
+    _glfwPlatformFreeModule(_glfw.wl.libdecor.module);
+    _glfwPlatformFreeModule(_glfw.wl.egl.module);
+    _glfwPlatformFreeModule(_glfw.wl.xkb.module);
+    _glfwPlatformFreeModule(_glfw.wl.cursor.module);
 }
 
 #endif // _GLFW_WAYLAND
