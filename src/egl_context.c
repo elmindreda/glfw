@@ -312,18 +312,17 @@ static int extensionSupportedEGL(const char* extension)
 
 static GLFWglproc getProcAddressEGL(const char* procname)
 {
+    const GLFWglproc proc = (GLFWglproc) eglGetProcAddress(procname);
+    if (proc)
+        return proc;
+
     _GLFWwindow* window = _glfwPlatformGetTls(&_glfw.contextSlot);
     assert(window != NULL);
 
-    if (window->context.egl.clientModule)
-    {
-        GLFWglproc proc = (GLFWglproc)
-            _glfwPlatformGetModuleSymbol(window->context.egl.clientModule, procname);
-        if (proc)
-            return proc;
-    }
+    if (!_glfw.egl.KHR_get_all_proc_addresses)
+        return _glfwPlatformGetModuleSymbol(window->context.egl.clientModule, procname);
 
-    return eglGetProcAddress(procname);
+    return NULL;
 }
 
 static void destroyContextEGL(_GLFWwindow* window)
