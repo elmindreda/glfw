@@ -984,6 +984,7 @@ void _glfwTerminateWayland(void)
     _glfwPlatformFreeModule(_glfw.wl.egl.module);
     _glfwPlatformFreeModule(_glfw.wl.xkb.module);
     _glfwPlatformFreeModule(_glfw.wl.cursor.module);
+    _glfwPlatformFreeModule(_glfw.wl.client.module);
 }
 
 #endif // _GLFW_WAYLAND
