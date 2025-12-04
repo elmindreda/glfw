@@ -409,31 +409,34 @@ GLFWbool _glfwInitWGL(void)
     HGLRC prc, rc;
     HDC pdc, dc;
 
-    if (_glfw.wgl.module)
+    if (_glfw.wgl.initialized)
         return GLFW_TRUE;
 
-    _glfw.wgl.module = _glfwPlatformLoadModule("opengl32.dll");
     if (!_glfw.wgl.module)
     {
-        _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
-                             "WGL: Failed to load opengl32.dll");
-        return GLFW_FALSE;
-    }
+        _glfw.wgl.module = _glfwPlatformLoadModule("opengl32.dll");
+        if (!_glfw.wgl.module)
+        {
+            _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
+                                "WGL: Failed to load opengl32.dll");
+            return GLFW_FALSE;
+        }
 
-    _glfw.wgl.CreateContext = (PFN_wglCreateContext)
-        _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglCreateContext");
-    _glfw.wgl.DeleteContext = (PFN_wglDeleteContext)
-        _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglDeleteContext");
-    _glfw.wgl.GetProcAddress = (PFN_wglGetProcAddress)
-        _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglGetProcAddress");
-    _glfw.wgl.GetCurrentDC = (PFN_wglGetCurrentDC)
-        _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglGetCurrentDC");
-    _glfw.wgl.GetCurrentContext = (PFN_wglGetCurrentContext)
-        _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglGetCurrentContext");
-    _glfw.wgl.MakeCurrent = (PFN_wglMakeCurrent)
-        _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglMakeCurrent");
-    _glfw.wgl.ShareLists = (PFN_wglShareLists)
-        _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglShareLists");
+        _glfw.wgl.CreateContext = (PFN_wglCreateContext)
+            _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglCreateContext");
+        _glfw.wgl.DeleteContext = (PFN_wglDeleteContext)
+            _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglDeleteContext");
+        _glfw.wgl.GetProcAddress = (PFN_wglGetProcAddress)
+            _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglGetProcAddress");
+        _glfw.wgl.GetCurrentDC = (PFN_wglGetCurrentDC)
+            _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglGetCurrentDC");
+        _glfw.wgl.GetCurrentContext = (PFN_wglGetCurrentContext)
+            _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglGetCurrentContext");
+        _glfw.wgl.MakeCurrent = (PFN_wglMakeCurrent)
+            _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglMakeCurrent");
+        _glfw.wgl.ShareLists = (PFN_wglShareLists)
+            _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglShareLists");
+    }
 
     // NOTE: A dummy context has to be created for opengl32.dll to load the
     //       OpenGL ICD, from which we can then query WGL extensions
@@ -518,6 +521,8 @@ GLFWbool _glfwInitWGL(void)
 
     wglMakeCurrent(pdc, prc);
     wglDeleteContext(rc);
+
+    _glfw.wgl.initialized = GLFW_TRUE;
     return GLFW_TRUE;
 }
 

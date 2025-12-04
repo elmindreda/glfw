@@ -1634,10 +1634,8 @@ void _glfwTerminateX11(void)
         _glfw.x11.xi.module = NULL;
     }
 
-    _glfwTerminateOSMesa();
-    // NOTE: These need to be unloaded after XCloseDisplay, as they register
+    // NOTE: GLX and EGL need to be unloaded after XCloseDisplay, as they register
     //       cleanup callbacks that get called by that function
-    _glfwTerminateEGL();
     _glfwTerminateGLX();
 
     if (_glfw.x11.xlib.module)

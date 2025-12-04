@@ -257,82 +257,88 @@ static void destroyContextGLX(_GLFWwindow* window)
 //
 GLFWbool _glfwInitGLX(void)
 {
-    const char* sonames[] =
-    {
-#if defined(_GLFW_GLX_LIBRARY)
-        _GLFW_GLX_LIBRARY,
-#elif defined(__CYGWIN__)
-        "libGL-1.so",
-#elif defined(__OpenBSD__) || defined(__NetBSD__)
-        "libGL.so",
-#else
-        "libGLX.so.0",
-        "libGL.so.1",
-        "libGL.so",
-#endif
-        NULL
-    };
-
-    if (_glfw.glx.module)
+    if (_glfw.glx.initialized)
         return GLFW_TRUE;
-
-    for (int i = 0;  sonames[i];  i++)
-    {
-        _glfw.glx.module = _glfwPlatformLoadModule(sonames[i]);
-        if (_glfw.glx.module)
-            break;
-    }
 
     if (!_glfw.glx.module)
     {
-        _glfwInputError(GLFW_API_UNAVAILABLE, "GLX: Failed to load GLX");
-        return GLFW_FALSE;
-    }
+        const char* sonames[] =
+        {
+#if defined(_GLFW_GLX_LIBRARY)
+            _GLFW_GLX_LIBRARY,
+#elif defined(__CYGWIN__)
+            "libGL-1.so",
+#elif defined(__OpenBSD__) || defined(__NetBSD__)
+            "libGL.so",
+#else
+            "libGLX.so.0",
+            "libGL.so.1",
+            "libGL.so",
+#endif
+            NULL
+        };
 
-    _glfw.glx.GetFBConfigs = (PFNGLXGETFBCONFIGSPROC)
-        _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXGetFBConfigs");
-    _glfw.glx.GetFBConfigAttrib = (PFNGLXGETFBCONFIGATTRIBPROC)
-        _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXGetFBConfigAttrib");
-    _glfw.glx.GetClientString = (PFNGLXGETCLIENTSTRINGPROC)
-        _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXGetClientString");
-    _glfw.glx.QueryExtension = (PFNGLXQUERYEXTENSIONPROC)
-        _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXQueryExtension");
-    _glfw.glx.QueryVersion = (PFNGLXQUERYVERSIONPROC)
-        _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXQueryVersion");
-    _glfw.glx.DestroyContext = (PFNGLXDESTROYCONTEXTPROC)
-        _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXDestroyContext");
-    _glfw.glx.MakeCurrent = (PFNGLXMAKECURRENTPROC)
-        _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXMakeCurrent");
-    _glfw.glx.SwapBuffers = (PFNGLXSWAPBUFFERSPROC)
-        _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXSwapBuffers");
-    _glfw.glx.QueryExtensionsString = (PFNGLXQUERYEXTENSIONSSTRINGPROC)
-        _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXQueryExtensionsString");
-    _glfw.glx.CreateNewContext = (PFNGLXCREATENEWCONTEXTPROC)
-        _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXCreateNewContext");
-    _glfw.glx.CreateWindow = (PFNGLXCREATEWINDOWPROC)
-        _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXCreateWindow");
-    _glfw.glx.DestroyWindow = (PFNGLXDESTROYWINDOWPROC)
-        _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXDestroyWindow");
-    _glfw.glx.GetVisualFromFBConfig = (PFNGLXGETVISUALFROMFBCONFIGPROC)
-        _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXGetVisualFromFBConfig");
+        for (int i = 0;  sonames[i];  i++)
+        {
+            _glfw.glx.module = _glfwPlatformLoadModule(sonames[i]);
+            if (_glfw.glx.module)
+                break;
+        }
 
-    if (!_glfw.glx.GetFBConfigs ||
-        !_glfw.glx.GetFBConfigAttrib ||
-        !_glfw.glx.GetClientString ||
-        !_glfw.glx.QueryExtension ||
-        !_glfw.glx.QueryVersion ||
-        !_glfw.glx.DestroyContext ||
-        !_glfw.glx.MakeCurrent ||
-        !_glfw.glx.SwapBuffers ||
-        !_glfw.glx.QueryExtensionsString ||
-        !_glfw.glx.CreateNewContext ||
-        !_glfw.glx.CreateWindow ||
-        !_glfw.glx.DestroyWindow ||
-        !_glfw.glx.GetVisualFromFBConfig)
-    {
-        _glfwInputError(GLFW_PLATFORM_ERROR,
-                        "GLX: Failed to load required entry points");
-        return GLFW_FALSE;
+        if (!_glfw.glx.module)
+        {
+            _glfwInputError(GLFW_API_UNAVAILABLE, "GLX: Failed to load GLX");
+            return GLFW_FALSE;
+        }
+
+        _glfw.glx.GetFBConfigs = (PFNGLXGETFBCONFIGSPROC)
+            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXGetFBConfigs");
+        _glfw.glx.GetFBConfigAttrib = (PFNGLXGETFBCONFIGATTRIBPROC)
+            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXGetFBConfigAttrib");
+        _glfw.glx.GetClientString = (PFNGLXGETCLIENTSTRINGPROC)
+            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXGetClientString");
+        _glfw.glx.QueryExtension = (PFNGLXQUERYEXTENSIONPROC)
+            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXQueryExtension");
+        _glfw.glx.QueryVersion = (PFNGLXQUERYVERSIONPROC)
+            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXQueryVersion");
+        _glfw.glx.DestroyContext = (PFNGLXDESTROYCONTEXTPROC)
+            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXDestroyContext");
+        _glfw.glx.MakeCurrent = (PFNGLXMAKECURRENTPROC)
+            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXMakeCurrent");
+        _glfw.glx.SwapBuffers = (PFNGLXSWAPBUFFERSPROC)
+            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXSwapBuffers");
+        _glfw.glx.QueryExtensionsString = (PFNGLXQUERYEXTENSIONSSTRINGPROC)
+            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXQueryExtensionsString");
+        _glfw.glx.CreateNewContext = (PFNGLXCREATENEWCONTEXTPROC)
+            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXCreateNewContext");
+        _glfw.glx.CreateWindow = (PFNGLXCREATEWINDOWPROC)
+            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXCreateWindow");
+        _glfw.glx.DestroyWindow = (PFNGLXDESTROYWINDOWPROC)
+            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXDestroyWindow");
+        _glfw.glx.GetVisualFromFBConfig = (PFNGLXGETVISUALFROMFBCONFIGPROC)
+            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXGetVisualFromFBConfig");
+
+        if (!_glfw.glx.GetFBConfigs ||
+            !_glfw.glx.GetFBConfigAttrib ||
+            !_glfw.glx.GetClientString ||
+            !_glfw.glx.QueryExtension ||
+            !_glfw.glx.QueryVersion ||
+            !_glfw.glx.DestroyContext ||
+            !_glfw.glx.MakeCurrent ||
+            !_glfw.glx.SwapBuffers ||
+            !_glfw.glx.QueryExtensionsString ||
+            !_glfw.glx.CreateNewContext ||
+            !_glfw.glx.CreateWindow ||
+            !_glfw.glx.DestroyWindow ||
+            !_glfw.glx.GetVisualFromFBConfig)
+        {
+            _glfwInputError(GLFW_PLATFORM_ERROR,
+                            "GLX: Failed to load required entry points");
+
+            _glfwPlatformFreeModule(_glfw.glx.module);
+            _glfw.glx.module = NULL;
+            return GLFW_FALSE;
+        }
     }
 
     // NOTE: Unlike GLX 1.3 entry points these are not required to be present
@@ -422,6 +428,8 @@ GLFWbool _glfwInitGLX(void)
 
     if (extensionSupportedGLX("GLX_ARB_context_flush_control"))
         _glfw.glx.ARB_context_flush_control = GLFW_TRUE;
+
+    _glfw.glx.initialized = GLFW_TRUE;
 
     return GLFW_TRUE;
 }

@@ -894,9 +894,6 @@ int _glfwInitWayland(void)
 
 void _glfwTerminateWayland(void)
 {
-    _glfwTerminateEGL();
-    _glfwTerminateOSMesa();
-
     if (_glfw.wl.libdecor.context)
     {
         // Allow libdecor to finish receiving all its requested globals
@@ -980,12 +977,6 @@ void _glfwTerminateWayland(void)
         close(_glfw.wl.cursorTimerfd);
 
     // Free modules only after all Wayland termination functions are called
-
-    if (_glfw.egl.module)
-    {
-        _glfwPlatformFreeModule(_glfw.egl.module);
-        _glfw.egl.module = NULL;
-    }
 
     if (_glfw.wl.libdecor.module)
     {

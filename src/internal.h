@@ -510,7 +510,6 @@ struct _GLFWcontext
         EGLConfig       config;
         EGLContext      handle;
         EGLSurface      surface;
-        void*           clientModule;
     } egl;
 
     struct {
@@ -823,6 +822,9 @@ struct _GLFWlibrary
         GLFWbool        MESA_platform_surfaceless;
 
         void*           module;
+        void*           openglModule;
+        void*           glesv1Module;
+        void*           glesv2Module;
 
         PFN_eglGetConfigAttrib      GetConfigAttrib;
         PFN_eglGetConfigs           GetConfigs;

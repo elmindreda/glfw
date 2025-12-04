@@ -171,7 +171,8 @@ GLFWbool _glfwInitOSMesa(void)
         _glfwInputError(GLFW_PLATFORM_ERROR,
                         "OSMesa: Failed to load required entry points");
 
-        _glfwTerminateOSMesa();
+        _glfwPlatformFreeModule(_glfw.osmesa.module);
+        _glfw.osmesa.module = NULL;
         return GLFW_FALSE;
     }
 
@@ -180,11 +181,6 @@ GLFWbool _glfwInitOSMesa(void)
 
 void _glfwTerminateOSMesa(void)
 {
-    if (_glfw.osmesa.module)
-    {
-        _glfwPlatformFreeModule(_glfw.osmesa.module);
-        _glfw.osmesa.module = NULL;
-    }
 }
 
 #define SET_ATTRIB(a, v) \

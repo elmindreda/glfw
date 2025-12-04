@@ -53,36 +53,40 @@ GLFWbool _glfwInitVulkan(int mode)
         _glfw.vk.GetInstanceProcAddr = _glfw.hints.init.vulkanLoader;
     else
     {
+        if (!_glfw.vk.module)
+        {
 #if defined(_GLFW_VULKAN_LIBRARY)
-        _glfw.vk.module = _glfwPlatformLoadModule(_GLFW_VULKAN_LIBRARY);
+            _glfw.vk.module = _glfwPlatformLoadModule(_GLFW_VULKAN_LIBRARY);
 #elif defined(_GLFW_WIN32)
-        _glfw.vk.module = _glfwPlatformLoadModule("vulkan-1.dll");
+            _glfw.vk.module = _glfwPlatformLoadModule("vulkan-1.dll");
 #elif defined(_GLFW_COCOA)
-        _glfw.vk.module = _glfwPlatformLoadModule("libvulkan.1.dylib");
-        if (!_glfw.vk.module)
-            _glfw.vk.module = _glfwLoadLocalVulkanLoaderCocoa();
+            _glfw.vk.module = _glfwPlatformLoadModule("libvulkan.1.dylib");
+            if (!_glfw.vk.module)
+                _glfw.vk.module = _glfwLoadLocalVulkanLoaderCocoa();
 #elif defined(__OpenBSD__) || defined(__NetBSD__)
-        _glfw.vk.module = _glfwPlatformLoadModule("libvulkan.so");
+            _glfw.vk.module = _glfwPlatformLoadModule("libvulkan.so");
 #else
-        _glfw.vk.module = _glfwPlatformLoadModule("libvulkan.so.1");
+            _glfw.vk.module = _glfwPlatformLoadModule("libvulkan.so.1");
 #endif
-        if (!_glfw.vk.module)
-        {
-            if (mode == _GLFW_REQUIRE_LOADER)
-                _glfwInputError(GLFW_API_UNAVAILABLE, "Vulkan: Loader not found");
+            if (!_glfw.vk.module)
+            {
+                if (mode == _GLFW_REQUIRE_LOADER)
+                    _glfwInputError(GLFW_API_UNAVAILABLE, "Vulkan: Loader not found");
 
-            return GLFW_FALSE;
-        }
+                return GLFW_FALSE;
+            }
 
-        _glfw.vk.GetInstanceProcAddr = (PFN_vkGetInstanceProcAddr)
-            _glfwPlatformGetModuleSymbol(_glfw.vk.module, "vkGetInstanceProcAddr");
-        if (!_glfw.vk.GetInstanceProcAddr)
-        {
-            _glfwInputError(GLFW_API_UNAVAILABLE,
-                            "Vulkan: Loader does not export vkGetInstanceProcAddr");
+            _glfw.vk.GetInstanceProcAddr = (PFN_vkGetInstanceProcAddr)
+                _glfwPlatformGetModuleSymbol(_glfw.vk.module, "vkGetInstanceProcAddr");
+            if (!_glfw.vk.GetInstanceProcAddr)
+            {
+                _glfwInputError(GLFW_API_UNAVAILABLE,
+                                "Vulkan: Loader does not export vkGetInstanceProcAddr");
 
-            _glfwTerminateVulkan();
-            return GLFW_FALSE;
+                _glfwPlatformFreeModule(_glfw.vk.module);
+                _glfw.vk.module = NULL;
+                return GLFW_FALSE;
+            }
         }
     }
 
@@ -157,8 +161,6 @@ GLFWbool _glfwInitVulkan(int mode)
 
 void _glfwTerminateVulkan(void)
 {
-    if (_glfw.vk.module)
-        _glfwPlatformFreeModule(_glfw.vk.module);
 }
 
 const char* _glfwGetVulkanResultString(VkResult result)

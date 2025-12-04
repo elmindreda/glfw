@@ -120,6 +120,8 @@ static void terminate(void)
     _glfw.mappingCount = 0;
 
     _glfwTerminateVulkan();
+    _glfwTerminateEGL();
+    _glfwTerminateOSMesa();
     _glfw.platform.terminateJoysticks();
     _glfw.platform.terminate();
 
@@ -135,6 +137,13 @@ static void terminate(void)
     _glfwPlatformDestroyTls(&_glfw.contextSlot);
     _glfwPlatformDestroyTls(&_glfw.errorSlot);
     _glfwPlatformDestroyMutex(&_glfw.errorLock);
+
+    _glfwPlatformFreeModule(_glfw.vk.module);
+    _glfwPlatformFreeModule(_glfw.egl.module);
+    _glfwPlatformFreeModule(_glfw.egl.openglModule);
+    _glfwPlatformFreeModule(_glfw.egl.glesv1Module);
+    _glfwPlatformFreeModule(_glfw.egl.glesv2Module);
+    _glfwPlatformFreeModule(_glfw.osmesa.module);
 
     memset(&_glfw, 0, sizeof(_glfw));
 }

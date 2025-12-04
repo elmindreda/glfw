@@ -322,6 +322,7 @@ typedef struct _GLFWcontextWGL
 //
 typedef struct _GLFWlibraryWGL
 {
+    GLFWbool                            initialized;
     void*                               module;
     PFN_wglCreateContext                CreateContext;
     PFN_wglDeleteContext                DeleteContext;
