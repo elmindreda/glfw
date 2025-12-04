@@ -156,6 +156,7 @@ information on what to include when reporting a bug.
  - [X11] Bugfix: Clamp width and height to >= 1 to prevent BadValue error and app exit
  - [X11] Bugfix: The OpenGL client library would not be unloaded if an OpenGL
    context had been created via EGL
+ - [X11] Bugfix: The `libXext` library was not unloaded at termination
  - [Linux] Bugfix: The header for `ioctl` was only implicitly included (#2778)
  - [Null] Added Vulkan 'window' surface creation via `VK_EXT_headless_surface`
  - [Null] Added EGL context creation on Mesa via `EGL_MESA_platform_surfaceless`

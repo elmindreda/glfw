@@ -1607,6 +1607,7 @@ void _glfwTerminateX11(void)
     _glfwPlatformFreeModule(_glfw.x11.xinerama.module);
     _glfwPlatformFreeModule(_glfw.x11.xrender.module);
     _glfwPlatformFreeModule(_glfw.x11.vidmode.module);
+    _glfwPlatformFreeModule(_glfw.x11.xshape.module);
     _glfwPlatformFreeModule(_glfw.x11.xi.module);
     _glfwPlatformFreeModule(_glfw.glx.module);
     _glfwPlatformFreeModule(_glfw.x11.xlib.module);
