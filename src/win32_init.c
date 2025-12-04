@@ -170,6 +170,9 @@ static GLFWbool loadLibraries(void)
 //
 static void freeLibraries(void)
 {
+    if (_glfw.wgl.module)
+        _glfwPlatformFreeModule(_glfw.wgl.module);
+
     if (_glfw.win32.xinput.module)
         _glfwPlatformFreeModule(_glfw.win32.xinput.module);
 
@@ -716,8 +719,6 @@ void _glfwTerminateWin32(void)
 
     _glfw_free(_glfw.win32.clipboardString);
     _glfw_free(_glfw.win32.rawInput);
-
-    _glfwTerminateWGL();
 
     freeLibraries();
 }

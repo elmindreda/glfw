@@ -517,7 +517,6 @@ GLFWbool _glfwInitEGL(void)
                         "EGL: Failed to get EGL display: %s",
                         getEGLErrorString(eglGetError()));
 
-        _glfwTerminateEGL();
         return GLFW_FALSE;
     }
 

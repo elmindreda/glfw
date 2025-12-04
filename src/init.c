@@ -119,9 +119,7 @@ static void terminate(void)
     _glfw.mappings = NULL;
     _glfw.mappingCount = 0;
 
-    _glfwTerminateVulkan();
     _glfwTerminateEGL();
-    _glfwTerminateOSMesa();
     _glfw.platform.terminateJoysticks();
     _glfw.platform.terminate();
 

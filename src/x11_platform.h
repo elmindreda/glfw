@@ -994,7 +994,6 @@ void _glfwPushSelectionToManagerX11(void);
 void _glfwCreateInputContextX11(_GLFWwindow* window);
 
 GLFWbool _glfwInitGLX(void);
-void _glfwTerminateGLX(void);
 GLFWbool _glfwCreateContextGLX(_GLFWwindow* window,
                                const _GLFWctxconfig* ctxconfig,
                                const _GLFWfbconfig* fbconfig);

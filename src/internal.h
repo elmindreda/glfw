@@ -1001,13 +1001,11 @@ GLFWbool _glfwChooseVisualEGL(const _GLFWwndconfig* wndconfig,
 #endif /*_GLFW_X11*/
 
 GLFWbool _glfwInitOSMesa(void);
-void _glfwTerminateOSMesa(void);
 GLFWbool _glfwCreateContextOSMesa(_GLFWwindow* window,
                                   const _GLFWctxconfig* ctxconfig,
                                   const _GLFWfbconfig* fbconfig);
 
 GLFWbool _glfwInitVulkan(int mode);
-void _glfwTerminateVulkan(void);
 const char* _glfwGetVulkanResultString(VkResult result);
 
 size_t _glfwEncodeUTF8(char* s, uint32_t codepoint);

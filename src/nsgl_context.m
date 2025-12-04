@@ -147,12 +147,6 @@ GLFWbool _glfwInitNSGL(void)
     return GLFW_TRUE;
 }
 
-// Terminate OpenGL support
-//
-void _glfwTerminateNSGL(void)
-{
-}
-
 // Create the OpenGL context
 //
 GLFWbool _glfwCreateContextNSGL(_GLFWwindow* window,

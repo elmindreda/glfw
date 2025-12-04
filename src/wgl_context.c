@@ -526,14 +526,6 @@ GLFWbool _glfwInitWGL(void)
     return GLFW_TRUE;
 }
 
-// Terminate WGL
-//
-void _glfwTerminateWGL(void)
-{
-    if (_glfw.wgl.module)
-        _glfwPlatformFreeModule(_glfw.wgl.module);
-}
-
 #define SET_ATTRIB(a, v) \
 { \
     assert(((size_t) index + 1) < sizeof(attribs) / sizeof(attribs[0])); \

@@ -1636,7 +1636,11 @@ void _glfwTerminateX11(void)
 
     // NOTE: GLX and EGL need to be unloaded after XCloseDisplay, as they register
     //       cleanup callbacks that get called by that function
-    _glfwTerminateGLX();
+    if (_glfw.glx.module)
+    {
+        _glfwPlatformFreeModule(_glfw.glx.module);
+        _glfw.glx.module = NULL;
+    }
 
     if (_glfw.x11.xlib.module)
     {

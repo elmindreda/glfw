@@ -434,20 +434,6 @@ GLFWbool _glfwInitGLX(void)
     return GLFW_TRUE;
 }
 
-// Terminate GLX
-//
-void _glfwTerminateGLX(void)
-{
-    // NOTE: This function must not call any X11 functions, as it is called
-    //       after XCloseDisplay (see _glfwTerminateX11 for details)
-
-    if (_glfw.glx.module)
-    {
-        _glfwPlatformFreeModule(_glfw.glx.module);
-        _glfw.glx.module = NULL;
-    }
-}
-
 #define SET_ATTRIB(a, v) \
 { \
     assert(((size_t) index + 1) < sizeof(attribs) / sizeof(attribs[0])); \

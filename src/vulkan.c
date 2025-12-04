@@ -97,7 +97,6 @@ GLFWbool _glfwInitVulkan(int mode)
         _glfwInputError(GLFW_API_UNAVAILABLE,
                         "Vulkan: Failed to retrieve vkEnumerateInstanceExtensionProperties");
 
-        _glfwTerminateVulkan();
         return GLFW_FALSE;
     }
 
@@ -112,7 +111,6 @@ GLFWbool _glfwInitVulkan(int mode)
                             _glfwGetVulkanResultString(err));
         }
 
-        _glfwTerminateVulkan();
         return GLFW_FALSE;
     }
 
@@ -126,7 +124,6 @@ GLFWbool _glfwInitVulkan(int mode)
                         _glfwGetVulkanResultString(err));
 
         _glfw_free(ep);
-        _glfwTerminateVulkan();
         return GLFW_FALSE;
     }
 
@@ -157,10 +154,6 @@ GLFWbool _glfwInitVulkan(int mode)
     _glfw.platform.getRequiredInstanceExtensions(_glfw.vk.extensions);
 
     return GLFW_TRUE;
-}
-
-void _glfwTerminateVulkan(void)
-{
 }
 
 const char* _glfwGetVulkanResultString(VkResult result)
