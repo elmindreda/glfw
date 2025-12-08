@@ -336,7 +336,7 @@ GLFWbool _glfwInitGLX(void)
                             "GLX: Failed to load required entry points");
 
             _glfwPlatformFreeModule(_glfw.glx.module);
-            _glfw.glx.module = NULL;
+            memset(&_glfw.glx, 0, sizeof(_glfw.glx));
             return GLFW_FALSE;
         }
     }

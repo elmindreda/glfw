@@ -436,6 +436,22 @@ GLFWbool _glfwInitWGL(void)
             _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglMakeCurrent");
         _glfw.wgl.ShareLists = (PFN_wglShareLists)
             _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglShareLists");
+
+        if (!_glfw.wgl.CreateContext ||
+            !_glfw.wgl.DeleteContext ||
+            !_glfw.wgl.GetProcAddress ||
+            !_glfw.wgl.GetCurrentDC ||
+            !_glfw.wgl.GetCurrentContext ||
+            !_glfw.wgl.MakeCurrent ||
+            !_glfw.wgl.ShareLists)
+        {
+            _glfwInputError(GLFW_PLATFORM_ERROR,
+                            "WGL: Failed to load required entry points");
+
+            _glfwPlatformFreeModule(_glfw.wgl.module);
+            memset(&_glfw.wgl, 0, sizeof(_glfw.wgl));
+            return GLFW_FALSE;
+        }
     }
 
     // NOTE: A dummy context has to be created for opengl32.dll to load the

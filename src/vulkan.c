@@ -84,7 +84,7 @@ GLFWbool _glfwInitVulkan(int mode)
                                 "Vulkan: Loader does not export vkGetInstanceProcAddr");
 
                 _glfwPlatformFreeModule(_glfw.vk.module);
-                _glfw.vk.module = NULL;
+                memset(&_glfw.vk, 0, sizeof(_glfw.vk));
                 return GLFW_FALSE;
             }
         }

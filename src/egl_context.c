@@ -459,7 +459,7 @@ GLFWbool _glfwInitEGL(void)
                             "EGL: Failed to load required entry points");
 
             _glfwPlatformFreeModule(_glfw.egl.module);
-            _glfw.egl.module = NULL;
+            memset(&_glfw.egl, 0, sizeof(_glfw.egl));
             return GLFW_FALSE;
         }
     }

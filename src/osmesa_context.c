@@ -172,7 +172,7 @@ GLFWbool _glfwInitOSMesa(void)
                         "OSMesa: Failed to load required entry points");
 
         _glfwPlatformFreeModule(_glfw.osmesa.module);
-        _glfw.osmesa.module = NULL;
+        memset(&_glfw.osmesa, 0, sizeof(_glfw.osmesa));
         return GLFW_FALSE;
     }
 
