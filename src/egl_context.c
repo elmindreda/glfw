@@ -322,13 +322,13 @@ static GLFWglproc getProcAddressEGL(const char* procname)
     if (!_glfw.egl.KHR_get_all_proc_addresses)
     {
         if (window->context.client == GLFW_OPENGL_API)
-            return _glfwPlatformGetModuleSymbol(_glfw.egl.openglModule, procname);
+            return _glfwGetModuleSymbol(_glfw.egl.openglModule, procname);
         else
         {
             if (window->context.major == 1)
-                return _glfwPlatformGetModuleSymbol(_glfw.egl.glesv1Module, procname);
+                return _glfwGetModuleSymbol(_glfw.egl.glesv1Module, procname);
             else
-                return _glfwPlatformGetModuleSymbol(_glfw.egl.glesv2Module, procname);
+                return _glfwGetModuleSymbol(_glfw.egl.glesv2Module, procname);
         }
     }
 
@@ -389,7 +389,7 @@ GLFWbool _glfwInitEGL(void)
 
         for (i = 0;  sonames[i];  i++)
         {
-            _glfw.egl.module = _glfwPlatformLoadModule(sonames[i]);
+            _glfw.egl.module = _glfwLoadModule(sonames[i]);
             if (_glfw.egl.module)
                 break;
         }
@@ -403,39 +403,39 @@ GLFWbool _glfwInitEGL(void)
         _glfw.egl.prefix = (strncmp(sonames[i], "lib", 3) == 0);
 
         _glfw.egl.GetConfigAttrib = (PFN_eglGetConfigAttrib)
-            _glfwPlatformGetModuleSymbol(_glfw.egl.module, "eglGetConfigAttrib");
+            _glfwGetModuleSymbol(_glfw.egl.module, "eglGetConfigAttrib");
         _glfw.egl.GetConfigs = (PFN_eglGetConfigs)
-            _glfwPlatformGetModuleSymbol(_glfw.egl.module, "eglGetConfigs");
+            _glfwGetModuleSymbol(_glfw.egl.module, "eglGetConfigs");
         _glfw.egl.GetDisplay = (PFN_eglGetDisplay)
-            _glfwPlatformGetModuleSymbol(_glfw.egl.module, "eglGetDisplay");
+            _glfwGetModuleSymbol(_glfw.egl.module, "eglGetDisplay");
         _glfw.egl.GetError = (PFN_eglGetError)
-            _glfwPlatformGetModuleSymbol(_glfw.egl.module, "eglGetError");
+            _glfwGetModuleSymbol(_glfw.egl.module, "eglGetError");
         _glfw.egl.Initialize = (PFN_eglInitialize)
-            _glfwPlatformGetModuleSymbol(_glfw.egl.module, "eglInitialize");
+            _glfwGetModuleSymbol(_glfw.egl.module, "eglInitialize");
         _glfw.egl.Terminate = (PFN_eglTerminate)
-            _glfwPlatformGetModuleSymbol(_glfw.egl.module, "eglTerminate");
+            _glfwGetModuleSymbol(_glfw.egl.module, "eglTerminate");
         _glfw.egl.BindAPI = (PFN_eglBindAPI)
-            _glfwPlatformGetModuleSymbol(_glfw.egl.module, "eglBindAPI");
+            _glfwGetModuleSymbol(_glfw.egl.module, "eglBindAPI");
         _glfw.egl.CreateContext = (PFN_eglCreateContext)
-            _glfwPlatformGetModuleSymbol(_glfw.egl.module, "eglCreateContext");
+            _glfwGetModuleSymbol(_glfw.egl.module, "eglCreateContext");
         _glfw.egl.DestroySurface = (PFN_eglDestroySurface)
-            _glfwPlatformGetModuleSymbol(_glfw.egl.module, "eglDestroySurface");
+            _glfwGetModuleSymbol(_glfw.egl.module, "eglDestroySurface");
         _glfw.egl.DestroyContext = (PFN_eglDestroyContext)
-            _glfwPlatformGetModuleSymbol(_glfw.egl.module, "eglDestroyContext");
+            _glfwGetModuleSymbol(_glfw.egl.module, "eglDestroyContext");
         _glfw.egl.CreateWindowSurface = (PFN_eglCreateWindowSurface)
-            _glfwPlatformGetModuleSymbol(_glfw.egl.module, "eglCreateWindowSurface");
+            _glfwGetModuleSymbol(_glfw.egl.module, "eglCreateWindowSurface");
         _glfw.egl.CreatePbufferSurface = (PFN_eglCreatePbufferSurface)
-            _glfwPlatformGetModuleSymbol(_glfw.egl.module, "eglCreatePbufferSurface");
+            _glfwGetModuleSymbol(_glfw.egl.module, "eglCreatePbufferSurface");
         _glfw.egl.MakeCurrent = (PFN_eglMakeCurrent)
-            _glfwPlatformGetModuleSymbol(_glfw.egl.module, "eglMakeCurrent");
+            _glfwGetModuleSymbol(_glfw.egl.module, "eglMakeCurrent");
         _glfw.egl.SwapBuffers = (PFN_eglSwapBuffers)
-            _glfwPlatformGetModuleSymbol(_glfw.egl.module, "eglSwapBuffers");
+            _glfwGetModuleSymbol(_glfw.egl.module, "eglSwapBuffers");
         _glfw.egl.SwapInterval = (PFN_eglSwapInterval)
-            _glfwPlatformGetModuleSymbol(_glfw.egl.module, "eglSwapInterval");
+            _glfwGetModuleSymbol(_glfw.egl.module, "eglSwapInterval");
         _glfw.egl.QueryString = (PFN_eglQueryString)
-            _glfwPlatformGetModuleSymbol(_glfw.egl.module, "eglQueryString");
+            _glfwGetModuleSymbol(_glfw.egl.module, "eglQueryString");
         _glfw.egl.GetProcAddress = (PFN_eglGetProcAddress)
-            _glfwPlatformGetModuleSymbol(_glfw.egl.module, "eglGetProcAddress");
+            _glfwGetModuleSymbol(_glfw.egl.module, "eglGetProcAddress");
 
         if (!_glfw.egl.GetConfigAttrib ||
             !_glfw.egl.GetConfigs ||
@@ -458,7 +458,7 @@ GLFWbool _glfwInitEGL(void)
             _glfwInputError(GLFW_PLATFORM_ERROR,
                             "EGL: Failed to load required entry points");
 
-            _glfwPlatformFreeModule(_glfw.egl.module);
+            _glfwFreeModule(_glfw.egl.module);
             memset(&_glfw.egl, 0, sizeof(_glfw.egl));
             return GLFW_FALSE;
         }
@@ -838,7 +838,7 @@ GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
                 if (_glfw.egl.prefix != (strncmp(sonames[i], "lib", 3) == 0))
                     continue;
 
-                *module = _glfwPlatformLoadModule(sonames[i]);
+                *module = _glfwLoadModule(sonames[i]);
                 if (*module)
                     break;
             }

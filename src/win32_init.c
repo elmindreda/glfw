@@ -81,7 +81,7 @@ static GLFWbool loadLibraries(void)
         return GLFW_FALSE;
     }
 
-    _glfw.win32.user32.module = _glfwPlatformLoadModule("user32.dll");
+    _glfw.win32.user32.module = _glfwLoadModule("user32.dll");
     if (!_glfw.win32.user32.module)
     {
         _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
@@ -90,21 +90,21 @@ static GLFWbool loadLibraries(void)
     }
 
     _glfw.win32.user32.EnableNonClientDpiScaling_ = (PFN_EnableNonClientDpiScaling)
-        _glfwPlatformGetModuleSymbol(_glfw.win32.user32.module, "EnableNonClientDpiScaling");
+        _glfwGetModuleSymbol(_glfw.win32.user32.module, "EnableNonClientDpiScaling");
     _glfw.win32.user32.SetProcessDpiAwarenessContext_ = (PFN_SetProcessDpiAwarenessContext)
-        _glfwPlatformGetModuleSymbol(_glfw.win32.user32.module, "SetProcessDpiAwarenessContext");
+        _glfwGetModuleSymbol(_glfw.win32.user32.module, "SetProcessDpiAwarenessContext");
     _glfw.win32.user32.GetDpiForWindow_ = (PFN_GetDpiForWindow)
-        _glfwPlatformGetModuleSymbol(_glfw.win32.user32.module, "GetDpiForWindow");
+        _glfwGetModuleSymbol(_glfw.win32.user32.module, "GetDpiForWindow");
     _glfw.win32.user32.AdjustWindowRectExForDpi_ = (PFN_AdjustWindowRectExForDpi)
-        _glfwPlatformGetModuleSymbol(_glfw.win32.user32.module, "AdjustWindowRectExForDpi");
+        _glfwGetModuleSymbol(_glfw.win32.user32.module, "AdjustWindowRectExForDpi");
     _glfw.win32.user32.GetSystemMetricsForDpi_ = (PFN_GetSystemMetricsForDpi)
-        _glfwPlatformGetModuleSymbol(_glfw.win32.user32.module, "GetSystemMetricsForDpi");
+        _glfwGetModuleSymbol(_glfw.win32.user32.module, "GetSystemMetricsForDpi");
 
-    _glfw.win32.dinput8.module = _glfwPlatformLoadModule("dinput8.dll");
+    _glfw.win32.dinput8.module = _glfwLoadModule("dinput8.dll");
     if (_glfw.win32.dinput8.module)
     {
         _glfw.win32.dinput8.Create = (PFN_DirectInput8Create)
-            _glfwPlatformGetModuleSymbol(_glfw.win32.dinput8.module, "DirectInput8Create");
+            _glfwGetModuleSymbol(_glfw.win32.dinput8.module, "DirectInput8Create");
     }
 
     {
@@ -121,46 +121,46 @@ static GLFWbool loadLibraries(void)
 
         for (i = 0;  names[i];  i++)
         {
-            _glfw.win32.xinput.module = _glfwPlatformLoadModule(names[i]);
+            _glfw.win32.xinput.module = _glfwLoadModule(names[i]);
             if (_glfw.win32.xinput.module)
             {
                 _glfw.win32.xinput.GetCapabilities = (PFN_XInputGetCapabilities)
-                    _glfwPlatformGetModuleSymbol(_glfw.win32.xinput.module, "XInputGetCapabilities");
+                    _glfwGetModuleSymbol(_glfw.win32.xinput.module, "XInputGetCapabilities");
                 _glfw.win32.xinput.GetState = (PFN_XInputGetState)
-                    _glfwPlatformGetModuleSymbol(_glfw.win32.xinput.module, "XInputGetState");
+                    _glfwGetModuleSymbol(_glfw.win32.xinput.module, "XInputGetState");
 
                 break;
             }
         }
     }
 
-    _glfw.win32.dwmapi.module = _glfwPlatformLoadModule("dwmapi.dll");
+    _glfw.win32.dwmapi.module = _glfwLoadModule("dwmapi.dll");
     if (_glfw.win32.dwmapi.module)
     {
         _glfw.win32.dwmapi.IsCompositionEnabled = (PFN_DwmIsCompositionEnabled)
-            _glfwPlatformGetModuleSymbol(_glfw.win32.dwmapi.module, "DwmIsCompositionEnabled");
+            _glfwGetModuleSymbol(_glfw.win32.dwmapi.module, "DwmIsCompositionEnabled");
         _glfw.win32.dwmapi.Flush = (PFN_DwmFlush)
-            _glfwPlatformGetModuleSymbol(_glfw.win32.dwmapi.module, "DwmFlush");
+            _glfwGetModuleSymbol(_glfw.win32.dwmapi.module, "DwmFlush");
         _glfw.win32.dwmapi.EnableBlurBehindWindow = (PFN_DwmEnableBlurBehindWindow)
-            _glfwPlatformGetModuleSymbol(_glfw.win32.dwmapi.module, "DwmEnableBlurBehindWindow");
+            _glfwGetModuleSymbol(_glfw.win32.dwmapi.module, "DwmEnableBlurBehindWindow");
         _glfw.win32.dwmapi.GetColorizationColor = (PFN_DwmGetColorizationColor)
-            _glfwPlatformGetModuleSymbol(_glfw.win32.dwmapi.module, "DwmGetColorizationColor");
+            _glfwGetModuleSymbol(_glfw.win32.dwmapi.module, "DwmGetColorizationColor");
     }
 
-    _glfw.win32.shcore.module = _glfwPlatformLoadModule("shcore.dll");
+    _glfw.win32.shcore.module = _glfwLoadModule("shcore.dll");
     if (_glfw.win32.shcore.module)
     {
         _glfw.win32.shcore.SetProcessDpiAwareness_ = (PFN_SetProcessDpiAwareness)
-            _glfwPlatformGetModuleSymbol(_glfw.win32.shcore.module, "SetProcessDpiAwareness");
+            _glfwGetModuleSymbol(_glfw.win32.shcore.module, "SetProcessDpiAwareness");
         _glfw.win32.shcore.GetDpiForMonitor_ = (PFN_GetDpiForMonitor)
-            _glfwPlatformGetModuleSymbol(_glfw.win32.shcore.module, "GetDpiForMonitor");
+            _glfwGetModuleSymbol(_glfw.win32.shcore.module, "GetDpiForMonitor");
     }
 
-    _glfw.win32.ntdll.module = _glfwPlatformLoadModule("ntdll.dll");
+    _glfw.win32.ntdll.module = _glfwLoadModule("ntdll.dll");
     if (_glfw.win32.ntdll.module)
     {
         _glfw.win32.ntdll.RtlVerifyVersionInfo_ = (PFN_RtlVerifyVersionInfo)
-            _glfwPlatformGetModuleSymbol(_glfw.win32.ntdll.module, "RtlVerifyVersionInfo");
+            _glfwGetModuleSymbol(_glfw.win32.ntdll.module, "RtlVerifyVersionInfo");
     }
 
     return GLFW_TRUE;
@@ -693,14 +693,6 @@ void _glfwTerminateWin32(void)
 
     _glfw_free(_glfw.win32.clipboardString);
     _glfw_free(_glfw.win32.rawInput);
-
-    _glfwPlatformFreeModule(_glfw.wgl.module);
-    _glfwPlatformFreeModule(_glfw.win32.xinput.module);
-    _glfwPlatformFreeModule(_glfw.win32.dinput8.module);
-    _glfwPlatformFreeModule(_glfw.win32.user32.module);
-    _glfwPlatformFreeModule(_glfw.win32.dwmapi.module);
-    _glfwPlatformFreeModule(_glfw.win32.shcore.module);
-    _glfwPlatformFreeModule(_glfw.win32.ntdll.module);
 }
 
 #endif // _GLFW_WIN32

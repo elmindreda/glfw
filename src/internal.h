@@ -792,6 +792,9 @@ struct _GLFWlibrary
     _GLFWtls            contextSlot;
     _GLFWmutex          errorLock;
 
+    void**              modules;
+    int                 moduleCapacity;
+
     struct {
         uint64_t        offset;
         // This is defined in platform.h
@@ -978,6 +981,10 @@ void _glfwFreeMonitor(_GLFWmonitor* monitor);
 void _glfwAllocGammaArrays(GLFWgammaramp* ramp, unsigned int size);
 void _glfwFreeGammaArrays(GLFWgammaramp* ramp);
 void _glfwSplitBPP(int bpp, int* red, int* green, int* blue);
+
+void* _glfwLoadModule(const char* path);
+void _glfwFreeModule(void* module);
+GLFWproc _glfwGetModuleSymbol(void* module, const char* name);
 
 void _glfwInitGamepadMappings(void);
 _GLFWjoystick* _glfwAllocJoystick(const char* name,

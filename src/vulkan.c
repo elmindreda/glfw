@@ -56,17 +56,17 @@ GLFWbool _glfwInitVulkan(int mode)
         if (!_glfw.vk.module)
         {
 #if defined(_GLFW_VULKAN_LIBRARY)
-            _glfw.vk.module = _glfwPlatformLoadModule(_GLFW_VULKAN_LIBRARY);
+            _glfw.vk.module = _glfwLoadModule(_GLFW_VULKAN_LIBRARY);
 #elif defined(_GLFW_WIN32)
-            _glfw.vk.module = _glfwPlatformLoadModule("vulkan-1.dll");
+            _glfw.vk.module = _glfwLoadModule("vulkan-1.dll");
 #elif defined(_GLFW_COCOA)
-            _glfw.vk.module = _glfwPlatformLoadModule("libvulkan.1.dylib");
+            _glfw.vk.module = _glfwLoadModule("libvulkan.1.dylib");
             if (!_glfw.vk.module)
                 _glfw.vk.module = _glfwLoadLocalVulkanLoaderCocoa();
 #elif defined(__OpenBSD__) || defined(__NetBSD__)
-            _glfw.vk.module = _glfwPlatformLoadModule("libvulkan.so");
+            _glfw.vk.module = _glfwLoadModule("libvulkan.so");
 #else
-            _glfw.vk.module = _glfwPlatformLoadModule("libvulkan.so.1");
+            _glfw.vk.module = _glfwLoadModule("libvulkan.so.1");
 #endif
             if (!_glfw.vk.module)
             {
@@ -77,13 +77,13 @@ GLFWbool _glfwInitVulkan(int mode)
             }
 
             _glfw.vk.GetInstanceProcAddr = (PFN_vkGetInstanceProcAddr)
-                _glfwPlatformGetModuleSymbol(_glfw.vk.module, "vkGetInstanceProcAddr");
+                _glfwGetModuleSymbol(_glfw.vk.module, "vkGetInstanceProcAddr");
             if (!_glfw.vk.GetInstanceProcAddr)
             {
                 _glfwInputError(GLFW_API_UNAVAILABLE,
                                 "Vulkan: Loader does not export vkGetInstanceProcAddr");
 
-                _glfwPlatformFreeModule(_glfw.vk.module);
+                _glfwFreeModule(_glfw.vk.module);
                 memset(&_glfw.vk, 0, sizeof(_glfw.vk));
                 return GLFW_FALSE;
             }
@@ -259,7 +259,7 @@ GLFWAPI GLFWvkproc glfwGetInstanceProcAddress(VkInstance instance,
     if (!proc)
     {
         if (_glfw.vk.module)
-            proc = (GLFWvkproc) _glfwPlatformGetModuleSymbol(_glfw.vk.module, procname);
+            proc = (GLFWvkproc) _glfwGetModuleSymbol(_glfw.vk.module, procname);
     }
 
     return proc;

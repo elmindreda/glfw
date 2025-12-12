@@ -136,12 +136,12 @@ static void terminate(void)
     _glfwPlatformDestroyTls(&_glfw.errorSlot);
     _glfwPlatformDestroyMutex(&_glfw.errorLock);
 
-    _glfwPlatformFreeModule(_glfw.vk.module);
-    _glfwPlatformFreeModule(_glfw.egl.module);
-    _glfwPlatformFreeModule(_glfw.egl.openglModule);
-    _glfwPlatformFreeModule(_glfw.egl.glesv1Module);
-    _glfwPlatformFreeModule(_glfw.egl.glesv2Module);
-    _glfwPlatformFreeModule(_glfw.osmesa.module);
+    for (int i = 0; i < _glfw.moduleCapacity; i++)
+        _glfwPlatformFreeModule(_glfw.modules[i]);
+
+    _glfw_free(_glfw.modules);
+    _glfw.modules = NULL;
+    _glfw.moduleCapacity = 0;
 
     memset(&_glfw, 0, sizeof(_glfw));
 }
@@ -233,6 +233,49 @@ char** _glfwParseUriList(char* text, int* count)
     }
 
     return paths;
+}
+
+void* _glfwLoadModule(const char* path)
+{
+    int slot = 0;
+
+    for (slot = 0; slot < _glfw.moduleCapacity; slot++)
+    {
+        if (!_glfw.modules[slot])
+            break;
+    }
+
+    if (slot == _glfw.moduleCapacity)
+    {
+        void** const modules =
+            _glfw_realloc(_glfw.modules, (_glfw.moduleCapacity + 1) * sizeof(void*));
+        if (!modules)
+            return NULL;
+
+        _glfw.modules = modules;
+        _glfw.moduleCapacity++;
+    }
+
+    _glfw.modules[slot] = _glfwPlatformLoadModule(path);
+    return _glfw.modules[slot];
+}
+
+void _glfwFreeModule(void* module)
+{
+    for (int i = 0; i < _glfw.moduleCapacity; i++)
+    {
+        if (_glfw.modules[i] == module)
+        {
+            _glfwPlatformFreeModule(module);
+            _glfw.modules[i] = NULL;
+            break;
+        }
+    }
+}
+
+GLFWproc _glfwGetModuleSymbol(void* module, const char* name)
+{
+    return _glfwPlatformGetModuleSymbol(module, name);
 }
 
 char* _glfw_strdup(const char* source)

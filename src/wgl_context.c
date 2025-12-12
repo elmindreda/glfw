@@ -389,7 +389,7 @@ static GLFWglproc getProcAddressWGL(const char* procname)
     if (proc)
         return proc;
 
-    return (GLFWglproc) _glfwPlatformGetModuleSymbol(_glfw.wgl.module, procname);
+    return (GLFWglproc) _glfwGetModuleSymbol(_glfw.wgl.module, procname);
 }
 
 static void destroyContextWGL(_GLFWwindow* window)
@@ -414,7 +414,7 @@ GLFWbool _glfwInitWGL(void)
 
     if (!_glfw.wgl.module)
     {
-        _glfw.wgl.module = _glfwPlatformLoadModule("opengl32.dll");
+        _glfw.wgl.module = _glfwLoadModule("opengl32.dll");
         if (!_glfw.wgl.module)
         {
             _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
@@ -423,19 +423,19 @@ GLFWbool _glfwInitWGL(void)
         }
 
         _glfw.wgl.CreateContext = (PFN_wglCreateContext)
-            _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglCreateContext");
+            _glfwGetModuleSymbol(_glfw.wgl.module, "wglCreateContext");
         _glfw.wgl.DeleteContext = (PFN_wglDeleteContext)
-            _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglDeleteContext");
+            _glfwGetModuleSymbol(_glfw.wgl.module, "wglDeleteContext");
         _glfw.wgl.GetProcAddress = (PFN_wglGetProcAddress)
-            _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglGetProcAddress");
+            _glfwGetModuleSymbol(_glfw.wgl.module, "wglGetProcAddress");
         _glfw.wgl.GetCurrentDC = (PFN_wglGetCurrentDC)
-            _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglGetCurrentDC");
+            _glfwGetModuleSymbol(_glfw.wgl.module, "wglGetCurrentDC");
         _glfw.wgl.GetCurrentContext = (PFN_wglGetCurrentContext)
-            _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglGetCurrentContext");
+            _glfwGetModuleSymbol(_glfw.wgl.module, "wglGetCurrentContext");
         _glfw.wgl.MakeCurrent = (PFN_wglMakeCurrent)
-            _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglMakeCurrent");
+            _glfwGetModuleSymbol(_glfw.wgl.module, "wglMakeCurrent");
         _glfw.wgl.ShareLists = (PFN_wglShareLists)
-            _glfwPlatformGetModuleSymbol(_glfw.wgl.module, "wglShareLists");
+            _glfwGetModuleSymbol(_glfw.wgl.module, "wglShareLists");
 
         if (!_glfw.wgl.CreateContext ||
             !_glfw.wgl.DeleteContext ||
@@ -448,7 +448,7 @@ GLFWbool _glfwInitWGL(void)
             _glfwInputError(GLFW_PLATFORM_ERROR,
                             "WGL: Failed to load required entry points");
 
-            _glfwPlatformFreeModule(_glfw.wgl.module);
+            _glfwFreeModule(_glfw.wgl.module);
             memset(&_glfw.wgl, 0, sizeof(_glfw.wgl));
             return GLFW_FALSE;
         }

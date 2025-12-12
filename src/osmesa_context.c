@@ -135,7 +135,7 @@ GLFWbool _glfwInitOSMesa(void)
 
     for (i = 0;  sonames[i];  i++)
     {
-        _glfw.osmesa.module = _glfwPlatformLoadModule(sonames[i]);
+        _glfw.osmesa.module = _glfwLoadModule(sonames[i]);
         if (_glfw.osmesa.module)
             break;
     }
@@ -147,19 +147,19 @@ GLFWbool _glfwInitOSMesa(void)
     }
 
     _glfw.osmesa.CreateContextExt = (PFN_OSMesaCreateContextExt)
-        _glfwPlatformGetModuleSymbol(_glfw.osmesa.module, "OSMesaCreateContextExt");
+        _glfwGetModuleSymbol(_glfw.osmesa.module, "OSMesaCreateContextExt");
     _glfw.osmesa.CreateContextAttribs = (PFN_OSMesaCreateContextAttribs)
-        _glfwPlatformGetModuleSymbol(_glfw.osmesa.module, "OSMesaCreateContextAttribs");
+        _glfwGetModuleSymbol(_glfw.osmesa.module, "OSMesaCreateContextAttribs");
     _glfw.osmesa.DestroyContext = (PFN_OSMesaDestroyContext)
-        _glfwPlatformGetModuleSymbol(_glfw.osmesa.module, "OSMesaDestroyContext");
+        _glfwGetModuleSymbol(_glfw.osmesa.module, "OSMesaDestroyContext");
     _glfw.osmesa.MakeCurrent = (PFN_OSMesaMakeCurrent)
-        _glfwPlatformGetModuleSymbol(_glfw.osmesa.module, "OSMesaMakeCurrent");
+        _glfwGetModuleSymbol(_glfw.osmesa.module, "OSMesaMakeCurrent");
     _glfw.osmesa.GetColorBuffer = (PFN_OSMesaGetColorBuffer)
-        _glfwPlatformGetModuleSymbol(_glfw.osmesa.module, "OSMesaGetColorBuffer");
+        _glfwGetModuleSymbol(_glfw.osmesa.module, "OSMesaGetColorBuffer");
     _glfw.osmesa.GetDepthBuffer = (PFN_OSMesaGetDepthBuffer)
-        _glfwPlatformGetModuleSymbol(_glfw.osmesa.module, "OSMesaGetDepthBuffer");
+        _glfwGetModuleSymbol(_glfw.osmesa.module, "OSMesaGetDepthBuffer");
     _glfw.osmesa.GetProcAddress = (PFN_OSMesaGetProcAddress)
-        _glfwPlatformGetModuleSymbol(_glfw.osmesa.module, "OSMesaGetProcAddress");
+        _glfwGetModuleSymbol(_glfw.osmesa.module, "OSMesaGetProcAddress");
 
     if (!_glfw.osmesa.CreateContextExt ||
         !_glfw.osmesa.DestroyContext ||
@@ -171,7 +171,7 @@ GLFWbool _glfwInitOSMesa(void)
         _glfwInputError(GLFW_PLATFORM_ERROR,
                         "OSMesa: Failed to load required entry points");
 
-        _glfwPlatformFreeModule(_glfw.osmesa.module);
+        _glfwFreeModule(_glfw.osmesa.module);
         memset(&_glfw.osmesa, 0, sizeof(_glfw.osmesa));
         return GLFW_FALSE;
     }

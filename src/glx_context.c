@@ -229,7 +229,7 @@ static GLFWglproc getProcAddressGLX(const char* procname)
     else
     {
         // NOTE: glvnd provides GLX 1.4, so this can only happen with libGL
-        return _glfwPlatformGetModuleSymbol(_glfw.glx.module, procname);
+        return _glfwGetModuleSymbol(_glfw.glx.module, procname);
     }
 }
 
@@ -280,7 +280,7 @@ GLFWbool _glfwInitGLX(void)
 
         for (int i = 0;  sonames[i];  i++)
         {
-            _glfw.glx.module = _glfwPlatformLoadModule(sonames[i]);
+            _glfw.glx.module = _glfwLoadModule(sonames[i]);
             if (_glfw.glx.module)
                 break;
         }
@@ -292,31 +292,31 @@ GLFWbool _glfwInitGLX(void)
         }
 
         _glfw.glx.GetFBConfigs = (PFNGLXGETFBCONFIGSPROC)
-            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXGetFBConfigs");
+            _glfwGetModuleSymbol(_glfw.glx.module, "glXGetFBConfigs");
         _glfw.glx.GetFBConfigAttrib = (PFNGLXGETFBCONFIGATTRIBPROC)
-            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXGetFBConfigAttrib");
+            _glfwGetModuleSymbol(_glfw.glx.module, "glXGetFBConfigAttrib");
         _glfw.glx.GetClientString = (PFNGLXGETCLIENTSTRINGPROC)
-            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXGetClientString");
+            _glfwGetModuleSymbol(_glfw.glx.module, "glXGetClientString");
         _glfw.glx.QueryExtension = (PFNGLXQUERYEXTENSIONPROC)
-            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXQueryExtension");
+            _glfwGetModuleSymbol(_glfw.glx.module, "glXQueryExtension");
         _glfw.glx.QueryVersion = (PFNGLXQUERYVERSIONPROC)
-            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXQueryVersion");
+            _glfwGetModuleSymbol(_glfw.glx.module, "glXQueryVersion");
         _glfw.glx.DestroyContext = (PFNGLXDESTROYCONTEXTPROC)
-            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXDestroyContext");
+            _glfwGetModuleSymbol(_glfw.glx.module, "glXDestroyContext");
         _glfw.glx.MakeCurrent = (PFNGLXMAKECURRENTPROC)
-            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXMakeCurrent");
+            _glfwGetModuleSymbol(_glfw.glx.module, "glXMakeCurrent");
         _glfw.glx.SwapBuffers = (PFNGLXSWAPBUFFERSPROC)
-            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXSwapBuffers");
+            _glfwGetModuleSymbol(_glfw.glx.module, "glXSwapBuffers");
         _glfw.glx.QueryExtensionsString = (PFNGLXQUERYEXTENSIONSSTRINGPROC)
-            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXQueryExtensionsString");
+            _glfwGetModuleSymbol(_glfw.glx.module, "glXQueryExtensionsString");
         _glfw.glx.CreateNewContext = (PFNGLXCREATENEWCONTEXTPROC)
-            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXCreateNewContext");
+            _glfwGetModuleSymbol(_glfw.glx.module, "glXCreateNewContext");
         _glfw.glx.CreateWindow = (PFNGLXCREATEWINDOWPROC)
-            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXCreateWindow");
+            _glfwGetModuleSymbol(_glfw.glx.module, "glXCreateWindow");
         _glfw.glx.DestroyWindow = (PFNGLXDESTROYWINDOWPROC)
-            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXDestroyWindow");
+            _glfwGetModuleSymbol(_glfw.glx.module, "glXDestroyWindow");
         _glfw.glx.GetVisualFromFBConfig = (PFNGLXGETVISUALFROMFBCONFIGPROC)
-            _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXGetVisualFromFBConfig");
+            _glfwGetModuleSymbol(_glfw.glx.module, "glXGetVisualFromFBConfig");
 
         if (!_glfw.glx.GetFBConfigs ||
             !_glfw.glx.GetFBConfigAttrib ||
@@ -335,7 +335,7 @@ GLFWbool _glfwInitGLX(void)
             _glfwInputError(GLFW_PLATFORM_ERROR,
                             "GLX: Failed to load required entry points");
 
-            _glfwPlatformFreeModule(_glfw.glx.module);
+            _glfwFreeModule(_glfw.glx.module);
             memset(&_glfw.glx, 0, sizeof(_glfw.glx));
             return GLFW_FALSE;
         }
@@ -343,9 +343,9 @@ GLFWbool _glfwInitGLX(void)
 
     // NOTE: Unlike GLX 1.3 entry points these are not required to be present
     _glfw.glx.GetProcAddress = (PFNGLXGETPROCADDRESSPROC)
-        _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXGetProcAddress");
+        _glfwGetModuleSymbol(_glfw.glx.module, "glXGetProcAddress");
     _glfw.glx.GetProcAddressARB = (PFNGLXGETPROCADDRESSPROC)
-        _glfwPlatformGetModuleSymbol(_glfw.glx.module, "glXGetProcAddressARB");
+        _glfwGetModuleSymbol(_glfw.glx.module, "glXGetProcAddressARB");
 
     if (!glXQueryExtension(_glfw.x11.display,
                            &_glfw.glx.errorBase,

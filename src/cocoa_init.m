@@ -477,7 +477,7 @@ void* _glfwLoadLocalVulkanLoaderCocoa(void)
     void* module = NULL;
 
     if (CFURLGetFileSystemRepresentation(loaderUrl, true, (UInt8*) path, sizeof(path) - 1))
-        module = _glfwPlatformLoadModule(path);
+        module = _glfwLoadModule(path);
 
     CFRelease(loaderUrl);
     CFRelease(frameworksUrl);
