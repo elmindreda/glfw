@@ -135,7 +135,7 @@ static void registryHandleGlobal(void* userData,
         {
             _glfw.wl.seat =
                 wl_registry_bind(registry, name, &wl_seat_interface,
-                                 _glfw_min(8, version));
+                                 _glfw_min(10, version));
             _glfwAddSeatListenerWayland(_glfw.wl.seat);
         }
     }
@@ -844,16 +844,6 @@ int _glfwInitWayland(void)
     wl_registry_add_listener(_glfw.wl.registry, &registryListener, NULL);
 
     createKeyTables();
-
-    _glfw.wl.keyRepeatTimerfd =
-        timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
-    if (_glfw.wl.keyRepeatTimerfd == -1)
-    {
-        _glfwInputError(GLFW_PLATFORM_ERROR,
-                        "Wayland: Failed to create timerfd: %s",
-                        strerror(errno));
-        return GLFW_FALSE;
-    }
 
     _glfw.wl.xkb.context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     if (!_glfw.wl.xkb.context)

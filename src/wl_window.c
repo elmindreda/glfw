@@ -1794,6 +1794,13 @@ static void pointerHandleAxisValue120(void* data,
         _glfw.wl.pending.discreteY = -(value120 / 120.0);
 }
 
+static void pointerHandleAxisRelativeDirection(void* data,
+                                               struct wl_pointer* wl_pointer,
+                                               uint32_t axis,
+                                               uint32_t direction)
+{
+}
+
 static const struct wl_pointer_listener pointerListener =
 {
     pointerHandleEnter,
@@ -1805,7 +1812,8 @@ static const struct wl_pointer_listener pointerListener =
     pointerHandleAxisSource,
     pointerHandleAxisStop,
     pointerHandleAxisDiscrete,
-    pointerHandleAxisValue120
+    pointerHandleAxisValue120,
+    pointerHandleAxisRelativeDirection
 };
 
 static void keyboardHandleKeymap(void* userData,
@@ -1932,8 +1940,11 @@ static void keyboardHandleLeave(void* userData,
     if (!window)
         return;
 
-    struct itimerspec timer = {0};
-    timerfd_settime(_glfw.wl.keyRepeatTimerfd, 0, &timer, NULL);
+    if (_glfw.wl.keyRepeatTimerfd >= 0)
+    {
+        struct itimerspec timer = {0};
+        timerfd_settime(_glfw.wl.keyRepeatTimerfd, 0, &timer, NULL);
+    }
 
     _glfw.wl.serial = serial;
     _glfw.wl.keyboardFocus = NULL;
@@ -1952,34 +1963,42 @@ static void keyboardHandleKey(void* userData,
         return;
 
     const int key = translateKey(scancode);
-    const int action =
-        state == WL_KEYBOARD_KEY_STATE_PRESSED ? GLFW_PRESS : GLFW_RELEASE;
+
+    int action = 0;
+    if (state == WL_KEYBOARD_KEY_STATE_RELEASED)
+       action = GLFW_RELEASE;
+    else
+       action = GLFW_PRESS;
 
     _glfw.wl.serial = serial;
 
     struct itimerspec timer = {0};
 
-    if (action == GLFW_PRESS)
+    if (wl_keyboard_get_version(_glfw.wl.keyboard) <
+        WL_KEYBOARD_KEY_STATE_REPEATED_SINCE_VERSION)
     {
-        const xkb_keycode_t keycode = scancode + 8;
-
-        if (xkb_keymap_key_repeats(_glfw.wl.xkb.keymap, keycode) &&
-            _glfw.wl.keyRepeatRate > 0)
+        if (action == GLFW_PRESS)
         {
-            _glfw.wl.keyRepeatScancode = scancode;
-            if (_glfw.wl.keyRepeatRate > 1)
-                timer.it_interval.tv_nsec = 1000000000 / _glfw.wl.keyRepeatRate;
-            else
-                timer.it_interval.tv_sec = 1;
+            const xkb_keycode_t keycode = scancode + 8;
 
-            timer.it_value.tv_sec = _glfw.wl.keyRepeatDelay / 1000;
-            timer.it_value.tv_nsec = (_glfw.wl.keyRepeatDelay % 1000) * 1000000;
+            if (xkb_keymap_key_repeats(_glfw.wl.xkb.keymap, keycode) &&
+                _glfw.wl.keyRepeatRate > 0)
+            {
+                _glfw.wl.keyRepeatScancode = scancode;
+                if (_glfw.wl.keyRepeatRate > 1)
+                    timer.it_interval.tv_nsec = 1000000000 / _glfw.wl.keyRepeatRate;
+                else
+                    timer.it_interval.tv_sec = 1;
+
+                timer.it_value.tv_sec = _glfw.wl.keyRepeatDelay / 1000;
+                timer.it_value.tv_nsec = (_glfw.wl.keyRepeatDelay % 1000) * 1000000;
+                timerfd_settime(_glfw.wl.keyRepeatTimerfd, 0, &timer, NULL);
+            }
+        }
+        else if (scancode == _glfw.wl.keyRepeatScancode)
+        {
             timerfd_settime(_glfw.wl.keyRepeatTimerfd, 0, &timer, NULL);
         }
-    }
-    else if (scancode == _glfw.wl.keyRepeatScancode)
-    {
-        timerfd_settime(_glfw.wl.keyRepeatTimerfd, 0, &timer, NULL);
     }
 
     _glfwInputKey(window, key, scancode, action, _glfw.wl.xkb.modifiers);
@@ -2082,11 +2101,24 @@ static void seatHandleCapabilities(void* userData,
         _glfw.wl.keyboard = wl_seat_get_keyboard(seat);
         wl_keyboard_add_listener(_glfw.wl.keyboard, &keyboardListener, NULL);
 
-        if (wl_keyboard_get_version(_glfw.wl.keyboard) <
-            WL_KEYBOARD_REPEAT_INFO_SINCE_VERSION)
+        const uint32_t version = wl_keyboard_get_version(_glfw.wl.keyboard);
+
+        if (version < WL_KEYBOARD_REPEAT_INFO_SINCE_VERSION)
         {
             _glfw.wl.keyRepeatRate = 4;
             _glfw.wl.keyRepeatDelay = 500;
+        }
+
+        if (version < WL_KEYBOARD_KEY_STATE_REPEATED_SINCE_VERSION)
+        {
+            _glfw.wl.keyRepeatTimerfd =
+                timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
+            if (_glfw.wl.keyRepeatTimerfd == -1)
+            {
+                _glfwInputError(GLFW_PLATFORM_ERROR,
+                                "Wayland: Failed to create timerfd: %s",
+                                strerror(errno));
+            }
         }
     }
     else if (!(caps & WL_SEAT_CAPABILITY_KEYBOARD) && _glfw.wl.keyboard)
@@ -2097,6 +2129,12 @@ static void seatHandleCapabilities(void* userData,
             wl_keyboard_destroy(_glfw.wl.keyboard);
 
         _glfw.wl.keyboard = NULL;
+
+        if (_glfw.wl.keyRepeatTimerfd >= 0)
+        {
+            close(_glfw.wl.keyRepeatTimerfd);
+            _glfw.wl.keyRepeatTimerfd = -1;
+        }
     }
 }
 
@@ -2449,8 +2487,11 @@ void _glfwDestroyWindowWayland(_GLFWwindow* window)
 
     if (window == _glfw.wl.keyboardFocus)
     {
-        struct itimerspec timer = {0};
-        timerfd_settime(_glfw.wl.keyRepeatTimerfd, 0, &timer, NULL);
+        if (_glfw.wl.keyRepeatTimerfd >= 0)
+        {
+            struct itimerspec timer = {0};
+            timerfd_settime(_glfw.wl.keyRepeatTimerfd, 0, &timer, NULL);
+        }
 
         _glfw.wl.keyboardFocus = NULL;
     }
