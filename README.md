@@ -131,6 +131,7 @@ information on what to include when reporting a bug.
  - [Cocoa] Removed support for OS X 10.10 Yosemite and earlier (#2506)
  - [Cocoa] Bugfix: Cmd+Period, Ctrl+Tab and Ctrl+Esc key events were not emitted
    (#1362,#2278)
+ - [Wayland] Added support for window opacity via `wp-alpha-modifier-v1`
  - [Wayland] Bugfix: The fractional scaling related objects were not destroyed
  - [Wayland] Bugfix: `glfwInit` would segfault on compositor with no seat (#2517)
  - [Wayland] Bugfix: A drag entering a non-GLFW surface could cause a segfault

@@ -51,6 +51,7 @@
 #include "xdg-activation-v1-client-protocol.h"
 #include "idle-inhibit-unstable-v1-client-protocol.h"
 #include "fractional-scale-v1-client-protocol.h"
+#include "alpha-modifier-v1-client-protocol.h"
 
 #define GLFW_BORDER_SIZE    4
 #define GLFW_CAPTION_HEIGHT 24
@@ -1207,6 +1208,7 @@ static GLFWbool createNativeSurface(_GLFWwindow* window,
 
     window->wl.maximized = wndconfig->maximized;
 
+    window->wl.opacity = 1.f;
     window->wl.transparent = fbconfig->transparent;
     if (!window->wl.transparent)
         setContentAreaOpaque(window);
@@ -2455,6 +2457,9 @@ void _glfwDestroyWindowWayland(_GLFWwindow* window)
         _glfw.wl.keyboardFocus = NULL;
     }
 
+    if (window->wl.alphaModifier)
+        wp_alpha_modifier_surface_v1_destroy(window->wl.alphaModifier);
+
     if (window->wl.fractionalScale)
         wp_fractional_scale_v1_destroy(window->wl.fractionalScale);
 
@@ -2905,13 +2910,28 @@ void _glfwSetWindowMousePassthroughWayland(_GLFWwindow* window, GLFWbool enabled
 
 float _glfwGetWindowOpacityWayland(_GLFWwindow* window)
 {
-    return 1.f;
+    return window->wl.opacity;
 }
 
 void _glfwSetWindowOpacityWayland(_GLFWwindow* window, float opacity)
 {
-    _glfwInputError(GLFW_FEATURE_UNAVAILABLE,
-                    "Wayland: The platform does not support setting the window opacity");
+    if (!_glfw.wl.alphaModifierManager)
+    {
+        _glfwInputError(GLFW_FEATURE_UNAVAILABLE,
+                        "Wayland: The platform does not support setting the window opacity");
+        return;
+    }
+
+    if (!window->wl.alphaModifier)
+    {
+        window->wl.alphaModifier =
+            wp_alpha_modifier_v1_get_surface(_glfw.wl.alphaModifierManager,
+                                             window->wl.surface);
+    }
+
+    const uint32_t multiplier = (uint32_t) (UINT32_MAX * window->wl.opacity);
+    wp_alpha_modifier_surface_v1_set_multiplier(window->wl.alphaModifier, multiplier);
+    window->wl.opacity = opacity;
 }
 
 void _glfwSetRawMouseMotionWayland(_GLFWwindow* window, GLFWbool enabled)

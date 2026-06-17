@@ -142,6 +142,8 @@ struct wl_output;
 #define xdg_activation_token_v1_interface _glfw_xdg_activation_token_v1_interface
 #define wl_surface_interface _glfw_wl_surface_interface
 #define wp_fractional_scale_v1_interface _glfw_wp_fractional_scale_v1_interface
+#define wp_alpha_modifier_v1_interface _glfw_wp_alpha_modifier_v1_interface
+#define wp_alpha_modifier_surface_v1_interface _glfw_wp_alpha_modifier_surface_v1_interface
 
 #define GLFW_WAYLAND_WINDOW_STATE         _GLFWwindowWayland  wl;
 #define GLFW_WAYLAND_LIBRARY_WINDOW_STATE _GLFWlibraryWayland wl;
@@ -374,6 +376,7 @@ typedef struct _GLFWwindowWayland
     GLFWbool                    fullscreen;
     GLFWbool                    transparent;
     GLFWbool                    scaleFramebuffer;
+    float                       opacity;
     struct wl_surface*          surface;
     struct wl_callback*         callback;
 
@@ -426,6 +429,8 @@ typedef struct _GLFWwindowWayland
     struct zwp_idle_inhibitor_v1*   idleInhibitor;
     struct xdg_activation_token_v1* activationToken;
 
+    struct wp_alpha_modifier_surface_v1* alphaModifier;
+
     struct {
         GLFWbool                    decorations;
         struct wl_buffer*           buffer;
@@ -458,6 +463,7 @@ typedef struct _GLFWlibraryWayland
     struct zwp_idle_inhibit_manager_v1*     idleInhibitManager;
     struct xdg_activation_v1*               activationManager;
     struct wp_fractional_scale_manager_v1*  fractionalScaleManager;
+    struct wp_alpha_modifier_v1*            alphaModifierManager;
 
     _GLFWofferWayland*          offers;
     unsigned int                offerCount;
