@@ -230,6 +230,7 @@ video tutorials.
  - Philip Rideout
  - Eddie Ringle
  - Max Risuhin
+ - road2react
  - Joe Roback
  - Jorge Rodriguez
  - Jari Ronkainen
